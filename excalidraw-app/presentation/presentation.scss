@@ -122,7 +122,7 @@
   flex: 1;
 }
 
-// Fullscreen presentation mode
+// Presentation mode — fills viewport, no native fullscreen by default
 .presentation-mode {
   position: fixed;
   inset: 0;
@@ -131,10 +131,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: none;
 
-  &:hover {
-    cursor: default;
+  &--dark {
+    background: #1e1e1e;
   }
 }
 
@@ -145,86 +144,87 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  // Leave room for toolbar at bottom
+  padding-bottom: 3.5rem;
 }
 
 .presentation-mode__canvas {
   max-width: 100%;
   max-height: 100%;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.2s ease;
 }
 
 .presentation-mode__canvas--hidden {
   opacity: 0;
 }
 
-.presentation-mode__controls {
+// Dark pill toolbar — always visible at bottom center
+.presentation-mode__toolbar {
   position: fixed;
-  bottom: 1.5rem;
+  bottom: 1rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.06);
-  border-radius: 999px;
-  color: var(--color-on-surface, #1b1b1f);
-  font-size: 0.85rem;
-  opacity: 0;
-  transition: opacity 0.3s;
-  backdrop-filter: blur(8px);
-
-  .presentation-mode:hover & {
-    opacity: 1;
-  }
+  gap: 0.25rem;
+  padding: 0.35rem 0.5rem;
+  background: #2b2b2b;
+  border-radius: 0.625rem;
+  color: #e0e0e0;
+  font-size: 0.8rem;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 0 1px rgba(0, 0, 0, 0.3);
+  font-family: var(
+    --ui-font,
+    Assistant,
+    system-ui,
+    -apple-system,
+    sans-serif
+  );
 }
 
-.presentation-mode__nav-btn {
+.presentation-mode__tool-btn {
   background: none;
   border: none;
-  color: var(--color-on-surface, #1b1b1f);
+  color: #c0c0c0;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 1.1rem;
+  padding: 0.35rem;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
+  transition: background 0.1s;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.08);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
   }
 
   &:disabled {
     opacity: 0.3;
     cursor: not-allowed;
+
+    &:hover {
+      background: none;
+      color: #c0c0c0;
+    }
   }
 }
 
 .presentation-mode__counter {
   font-variant-numeric: tabular-nums;
-  min-width: 4rem;
-  text-align: center;
+  padding: 0 0.5rem;
+  white-space: nowrap;
+  user-select: none;
+  color: #e0e0e0;
+  font-size: 0.8rem;
 }
 
-.presentation-mode__exit-btn {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  background: rgba(0, 0, 0, 0.06);
-  border: none;
-  color: var(--color-on-surface, #1b1b1f);
-  cursor: pointer;
-  padding: 0.4rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  opacity: 0;
-  transition: opacity 0.3s;
-  backdrop-filter: blur(8px);
-
-  .presentation-mode:hover & {
-    opacity: 1;
-  }
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.12);
-  }
+.presentation-mode__separator {
+  width: 1px;
+  height: 1.25rem;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 0.15rem;
 }

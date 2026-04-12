@@ -24,6 +24,7 @@ export const PresentationMode = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [transitioning, setTransitioning] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +50,6 @@ export const PresentationMode = ({
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         const dpr = window.devicePixelRatio || 1;
-        // fitScale maps frame to viewport, dpr makes it sharp on HiDPI
         const fitScale = Math.min(vw / width, vh / height);
         const scale = fitScale * dpr;
         return {
@@ -63,18 +63,15 @@ export const PresentationMode = ({
         if (cancelled || !canvasRef.current) {
           return;
         }
-        // Canvas element size = full resolution for sharpness
         canvasRef.current.width = renderedCanvas.width;
         canvasRef.current.height = renderedCanvas.height;
         const ctx = canvasRef.current.getContext("2d");
         if (ctx) {
           ctx.drawImage(renderedCanvas, 0, 0);
         }
-        // CSS size = viewport-fitted (browser downscales from HiDPI canvas)
         const dpr = window.devicePixelRatio || 1;
         canvasRef.current.style.width = `${renderedCanvas.width / dpr}px`;
         canvasRef.current.style.height = `${renderedCanvas.height / dpr}px`;
-        // Short delay for crossfade
         requestAnimationFrame(() => {
           if (!cancelled) {
             setTransitioning(false);
@@ -93,7 +90,6 @@ export const PresentationMode = ({
     };
   }, [currentSlide, elements, files]);
 
-  // Navigation
   const goNext = useCallback(() => {
     setCurrentIndex((i) => Math.min(i + 1, slideCount - 1));
   }, [slideCount]);
@@ -131,7 +127,6 @@ export const PresentationMode = ({
           setCurrentIndex(slideCount - 1);
           break;
         default:
-          // Number keys: jump to slide
           if (/^\d$/.test(e.key)) {
             const num = parseInt(e.key, 10);
             if (num >= 1 && num <= slideCount) {
@@ -145,11 +140,9 @@ export const PresentationMode = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [goNext, goPrev, onExit, slideCount]);
 
-  // Click to advance
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
-      // Don't advance if clicking controls
-      if ((e.target as HTMLElement).closest("button")) {
+      if ((e.target as HTMLElement).closest(".presentation-mode__toolbar")) {
         return;
       }
       goNext();
@@ -157,26 +150,23 @@ export const PresentationMode = ({
     [goNext],
   );
 
-  // Fullscreen
-  useEffect(() => {
-    containerRef.current?.requestFullscreen?.().catch(() => {});
-    return () => {
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-    };
+  const handleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    } else {
+      containerRef.current?.requestFullscreen?.().catch(() => {});
+    }
   }, []);
 
-  // Exit on fullscreen change (user presses Escape at browser level)
-  useEffect(() => {
-    const handler = () => {
-      if (!document.fullscreenElement) {
-        onExit();
-      }
-    };
-    document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
-  }, [onExit]);
+  const handleDownload = useCallback(() => {
+    if (!canvasRef.current) {
+      return;
+    }
+    const link = document.createElement("a");
+    link.download = `slide-${currentIndex + 1}.png`;
+    link.href = canvasRef.current.toDataURL("image/png");
+    link.click();
+  }, [currentIndex]);
 
   if (slideCount === 0) {
     onExit();
@@ -184,7 +174,11 @@ export const PresentationMode = ({
   }
 
   return (
-    <div className="presentation-mode" ref={containerRef} onClick={handleClick}>
+    <div
+      className={`presentation-mode ${darkMode ? "presentation-mode--dark" : ""}`}
+      ref={containerRef}
+      onClick={handleClick}
+    >
       <div className="presentation-mode__canvas-wrapper">
         <canvas
           ref={canvasRef}
@@ -194,29 +188,96 @@ export const PresentationMode = ({
         />
       </div>
 
-      <div className="presentation-mode__controls">
+      <div className="presentation-mode__toolbar">
         <button
-          className="presentation-mode__nav-btn"
+          className="presentation-mode__tool-btn"
           onClick={goPrev}
           disabled={currentIndex === 0}
+          aria-label="Previous slide"
         >
-          ◀
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
         </button>
         <span className="presentation-mode__counter">
-          {currentIndex + 1} / {slideCount}
+          Slide {currentIndex + 1}/{slideCount}
         </span>
         <button
-          className="presentation-mode__nav-btn"
+          className="presentation-mode__tool-btn"
           onClick={goNext}
           disabled={currentIndex === slideCount - 1}
+          aria-label="Next slide"
         >
-          ▶
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <div className="presentation-mode__separator" />
+
+        <button
+          className="presentation-mode__tool-btn"
+          onClick={() => setDarkMode((d) => !d)}
+          aria-label="Toggle dark mode"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+          </svg>
+        </button>
+        <button
+          className="presentation-mode__tool-btn"
+          onClick={handleDownload}
+          aria-label="Download slide"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+        </button>
+        <button
+          className="presentation-mode__tool-btn"
+          onClick={handleFullscreen}
+          aria-label="Toggle fullscreen"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3" />
+          </svg>
         </button>
       </div>
-
-      <button className="presentation-mode__exit-btn" onClick={onExit}>
-        Exit (Esc)
-      </button>
     </div>
   );
 };
