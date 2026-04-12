@@ -3,11 +3,21 @@ FROM --platform=${BUILDPLATFORM} node:20 AS frontend-build
 
 WORKDIR /app
 
-COPY . .
+# Copy dependency files first for better layer caching
+# yarn install only re-runs if these files change
+COPY package.json yarn.lock .npmrc* ./
+COPY excalidraw-app/package.json excalidraw-app/
+COPY packages/common/package.json packages/common/
+COPY packages/element/package.json packages/element/
+COPY packages/excalidraw/package.json packages/excalidraw/
+COPY packages/math/package.json packages/math/
+COPY packages/utils/package.json packages/utils/
 
-# Install monorepo dependencies
 RUN --mount=type=cache,target=/root/.cache/yarn \
-    npm_config_target_arch=${TARGETARCH} yarn --network-timeout 600000
+    npm_config_target_arch=${TARGETARCH} yarn --network-timeout 600000 --frozen-lockfile
+
+# Now copy source (changes here don't bust the yarn install cache)
+COPY . .
 
 ARG NODE_ENV=production
 
