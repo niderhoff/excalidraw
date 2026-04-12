@@ -10776,19 +10776,27 @@ class App extends React.Component<AppProps, AppState> {
         newElement &&
         isInvisiblySmallElement(newElement)
       ) {
-        // remove invisible element which was added in onPointerDown
-        // update the store snapshot, so that invisible elements are not captured by the store
-        this.updateScene({
-          elements: this.scene
-            .getElementsIncludingDeleted()
-            .filter((el) => el.id !== newElement.id),
-          appState: {
-            newElement: null,
-          },
-          captureUpdate: CaptureUpdateAction.NEVER,
-        });
+        // For frames, a click without drag creates a default 16:9 slide
+        if (isFrameLikeElement(newElement)) {
+          this.scene.mutateElement(newElement, {
+            width: 1920,
+            height: 1080,
+          });
+        } else {
+          // remove invisible element which was added in onPointerDown
+          // update the store snapshot, so that invisible elements are not captured by the store
+          this.updateScene({
+            elements: this.scene
+              .getElementsIncludingDeleted()
+              .filter((el) => el.id !== newElement.id),
+            appState: {
+              newElement: null,
+            },
+            captureUpdate: CaptureUpdateAction.NEVER,
+          });
 
-        return;
+          return;
+        }
       }
 
       if (isFrameLikeElement(newElement)) {
