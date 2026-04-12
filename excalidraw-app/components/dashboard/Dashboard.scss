@@ -537,3 +537,41 @@
     }
   }
 }
+
+// Dark mode overrides
+// Dashboard lives outside .excalidraw, so we define dark values directly
+// matching Excalidraw's theme--dark palette.
+.dashboard--dark {
+  --color-surface-lowest: #232329;
+  --color-surface-mid: #1a1a1f;
+  --color-on-surface: #e3e3e8;
+  --island-bg-color: #232329;
+  --default-border-color: #2e2d39;
+  --input-border-color: #3d3c47;
+  --input-bg-color: #1a1a1f;
+  --text-primary-color: #e3e3e8;
+  --button-hover-bg: #35343e;
+  --button-gray-1: #2e2d39;
+  --button-gray-2: #3d3c47;
+  --button-gray-3: #3d3c47;
+  --color-primary: #a8a5ff;
+  --color-primary-light: #35334a;
+  --color-primary-hover: #8b87ff;
+  --color-primary-darker: #8b87ff;
+  --color-primary-darkest: #7a76f0;
+  --color-gray-40: #5a5a6a;
+  --color-gray-60: #8e8e9e;
+  --color-danger: #e06060;
+  --popup-secondary-bg-color: #2e2d39;
+  --popup-bg-color: #232329;
+  --select-highlight-color: #a8a5ff;
+  --icon-fill-color: #c0c0d0;
+  --shadow-island: 0px 0px 1px rgba(0, 0, 0, 0.4),
+    0px 0px 3px rgba(0, 0, 0, 0.2), 0px 7px 14px rgba(0, 0, 0, 0.15);
+  --shadow-island-stronger: 0px 0px 1px rgba(0, 0, 0, 0.4),
+    0px 0px 3px rgba(0, 0, 0, 0.2), 0px 7px 14px rgba(0, 0, 0, 0.35);
+  --modal-shadow: 0px 100px 80px rgba(0, 0, 0, 0.15),
+    0px 41.78px 33.42px rgba(0, 0, 0, 0.1),
+    0px 12.52px 10.02px rgba(0, 0, 0, 0.07);
+  --dialog-border-color: #3d3c47;
+}

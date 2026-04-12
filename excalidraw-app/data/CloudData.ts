@@ -4,10 +4,15 @@
  */
 
 import { debounce } from "@excalidraw/common";
+import { exportToCanvas } from "@excalidraw/excalidraw";
 import { getNonDeletedElements } from "@excalidraw/element";
 import { clearAppStateForLocalStorage } from "@excalidraw/excalidraw/appState";
 
-import type { ExcalidrawElement, FileId } from "@excalidraw/element/types";
+import type {
+  ExcalidrawElement,
+  FileId,
+  NonDeletedExcalidrawElement,
+} from "@excalidraw/element/types";
 import type {
   AppState,
   BinaryFileData,
@@ -25,6 +30,7 @@ import { FileStatusStore } from "./fileStatusStore";
 import { FileManager } from "./FileManager";
 
 const SAVE_DEBOUNCE_MS = SAVE_TO_LOCAL_STORAGE_TIMEOUT; // 300ms
+const THUMBNAIL_DEBOUNCE_MS = 2000;
 
 export class CloudData {
   private static _save = debounce(
@@ -92,6 +98,53 @@ export class CloudData {
 
   static isSavePaused = () => {
     return document.hidden;
+  };
+
+  // Generate and save a thumbnail (debounced separately, less frequent)
+  private static _saveThumbnail = debounce(
+    async (
+      elements: readonly ExcalidrawElement[],
+      files: BinaryFiles,
+    ) => {
+      const sceneState = appJotaiStore.get(cloudSceneAtom);
+      if (!sceneState?.id) {
+        return;
+      }
+      const nonDeleted = getNonDeletedElements(elements);
+      if (nonDeleted.length === 0) {
+        return;
+      }
+      try {
+        const canvas = await exportToCanvas({
+          elements: nonDeleted as NonDeletedExcalidrawElement[],
+          appState: { exportBackground: true } as any,
+          files,
+          getDimensions: (width: number, height: number) => {
+            const maxDim = 320;
+            const scale = Math.min(maxDim / width, maxDim / height, 1);
+            return {
+              width: Math.ceil(width * scale),
+              height: Math.ceil(height * scale),
+              scale,
+            };
+          },
+        });
+        const thumbnail = canvas.toDataURL("image/png", 0.7);
+        await updateScene(sceneState.id, { thumbnail });
+      } catch {
+        // Thumbnail generation is best-effort
+      }
+    },
+    THUMBNAIL_DEBOUNCE_MS,
+  );
+
+  static saveThumbnail = (
+    elements: readonly ExcalidrawElement[],
+    files: BinaryFiles,
+  ) => {
+    if (!CloudData.isSavePaused()) {
+      CloudData._saveThumbnail(elements, files);
+    }
   };
 
   // ---------------------------------------------------------------------------

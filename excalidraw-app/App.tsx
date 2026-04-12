@@ -779,6 +779,9 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
       : LocalData.fileStorage;
 
     if (!dataLayer.isSavePaused()) {
+      if (isCloudScene) {
+        CloudData.saveThumbnail(elements, files);
+      }
       dataLayer.save(elements, appState, files, () => {
         if (excalidrawAPI) {
           let didChange = false;

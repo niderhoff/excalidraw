@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useLocation } from "wouter";
+
+import { STORAGE_KEYS } from "../app_constants";
 
 import {
   listScenes,
@@ -20,8 +22,22 @@ import { FolderTree } from "../components/dashboard/FolderTree";
 
 import "../components/dashboard/Dashboard.scss";
 
+const getResolvedTheme = (): "light" | "dark" => {
+  const stored = localStorage.getItem(STORAGE_KEYS.LOCAL_STORAGE_THEME);
+  if (stored === "dark") {
+    return "dark";
+  }
+  if (stored === "system") {
+    return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches
+      ? "dark"
+      : "light";
+  }
+  return "light";
+};
+
 export const DashboardPage = () => {
   const [, navigate] = useLocation();
+  const [theme, setTheme] = useState<"light" | "dark">(getResolvedTheme);
   const [scenes, setScenes] = useState<SceneMeta[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -30,6 +46,18 @@ export const DashboardPage = () => {
     "updatedAt" | "createdAt" | "title"
   >("updatedAt");
   const [loading, setLoading] = useState(true);
+
+  // Sync theme with editor's localStorage setting
+  useLayoutEffect(() => {
+    const mediaQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const sync = () => setTheme(getResolvedTheme());
+    mediaQuery?.addEventListener("change", sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      mediaQuery?.removeEventListener("change", sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
   const [moveDialogSceneId, setMoveDialogSceneId] = useState<string | null>(
     null,
   );
@@ -160,7 +188,7 @@ export const DashboardPage = () => {
       : folders.find((f) => f.id === currentFolderId)?.name || "Folder";
 
   return (
-    <div className="dashboard">
+    <div className={`dashboard ${theme === "dark" ? "dashboard--dark" : ""}`}>
       <div className="dashboard__header">
         <h1>
           <svg
