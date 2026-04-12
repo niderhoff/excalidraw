@@ -45,7 +45,7 @@ export const AppMainMenu: React.FC<{
             <rect x="14" y="14" width="7" height="7" />
           </svg>
         }
-        href="/"
+        href="/dashboard"
         className=""
       >
         Dashboard

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import ExcalidrawApp from "../App";
 import { createScene } from "../apiClient/scenes";
+import { setLastSceneId } from "../AppRouter";
 
 /**
  * Editor page — loads or creates a scene, then renders ExcalidrawApp
@@ -15,10 +16,14 @@ export const EditorPage = () => {
   const [loading, setLoading] = useState(!params.id);
 
   useEffect(() => {
+    if (params.id) {
+      setLastSceneId(params.id);
+    }
     // /scene/new — create a new scene on the server, then redirect
     if (!params.id) {
       createScene({ title: "Untitled" })
         .then(({ id }) => {
+          setLastSceneId(id);
           navigate(`/scene/${id}`, { replace: true });
           setSceneId(id);
           setLoading(false);

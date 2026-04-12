@@ -24,7 +24,7 @@ export const AppWelcomeScreen: React.FC<{
           <WelcomeScreen.Center.MenuItemLoadScene />
           <WelcomeScreen.Center.MenuItemHelp />
           <WelcomeScreen.Center.MenuItemLink
-            href="/"
+            href="/dashboard"
             shortcut={null}
             icon={
               <svg
