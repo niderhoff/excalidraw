@@ -50,7 +50,6 @@ export const AppMainMenu: React.FC<{
       >
         Dashboard
       </MainMenu.ItemLink>
-      <MainMenu.DefaultItems.Socials />
       {isDevEnv() && (
         <MainMenu.Item
           icon={eyeIcon}
