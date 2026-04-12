@@ -1,5 +1,5 @@
 # Stage 1: Build frontend
-FROM --platform=${BUILDPLATFORM} node:18 AS frontend-build
+FROM --platform=${BUILDPLATFORM} node:20 AS frontend-build
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ ARG NODE_ENV=production
 RUN npm_config_target_arch=${TARGETARCH} yarn build:app:docker
 
 # Stage 2: Build server
-FROM --platform=${BUILDPLATFORM} node:18-alpine AS server-build
+FROM --platform=${BUILDPLATFORM} node:20-alpine AS server-build
 
 WORKDIR /app/server
 
@@ -28,7 +28,7 @@ RUN npx tsc
 RUN npm prune --production
 
 # Stage 3: Runtime
-FROM --platform=${TARGETPLATFORM} node:18-alpine
+FROM --platform=${TARGETPLATFORM} node:20-alpine
 
 WORKDIR /app
 
