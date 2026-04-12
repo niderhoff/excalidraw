@@ -48,7 +48,10 @@ export const PresentationMode = ({
       getDimensions: (width: number, height: number) => {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
-        const scale = Math.min(vw / width, vh / height, 2);
+        const dpr = window.devicePixelRatio || 1;
+        // fitScale maps frame to viewport, dpr makes it sharp on HiDPI
+        const fitScale = Math.min(vw / width, vh / height);
+        const scale = fitScale * dpr;
         return {
           width: Math.ceil(width * scale),
           height: Math.ceil(height * scale),
@@ -60,12 +63,17 @@ export const PresentationMode = ({
         if (cancelled || !canvasRef.current) {
           return;
         }
+        // Canvas element size = full resolution for sharpness
         canvasRef.current.width = renderedCanvas.width;
         canvasRef.current.height = renderedCanvas.height;
         const ctx = canvasRef.current.getContext("2d");
         if (ctx) {
           ctx.drawImage(renderedCanvas, 0, 0);
         }
+        // CSS size = viewport-fitted (browser downscales from HiDPI canvas)
+        const dpr = window.devicePixelRatio || 1;
+        canvasRef.current.style.width = `${renderedCanvas.width / dpr}px`;
+        canvasRef.current.style.height = `${renderedCanvas.height / dpr}px`;
         // Short delay for crossfade
         requestAnimationFrame(() => {
           if (!cancelled) {
