@@ -80,7 +80,7 @@ export function createFilesRouter(storage: StorageAdapter) {
       return c.json({ error: "File data not found in storage" }, 404);
     }
 
-    return new Response(result.data, {
+    return new Response(new Uint8Array(result.data), {
       headers: {
         "Content-Type": result.contentType,
         "Cache-Control": "public, max-age=31536000, immutable",
