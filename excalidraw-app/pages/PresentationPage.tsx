@@ -84,8 +84,8 @@ export const PresentationPage = () => {
           alignItems: "center",
           justifyContent: "center",
           height: "100vh",
-          background: "#000",
-          color: "#fff",
+          background: "#fff",
+          color: "#1b1b1f",
           fontFamily: "'Segoe UI', system-ui, sans-serif",
         }}
       >

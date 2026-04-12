@@ -127,7 +127,7 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: #000;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,9 +166,9 @@
   align-items: center;
   gap: 1rem;
   padding: 0.5rem 1rem;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.06);
   border-radius: 999px;
-  color: white;
+  color: var(--color-on-surface, #1b1b1f);
   font-size: 0.85rem;
   opacity: 0;
   transition: opacity 0.3s;
@@ -182,7 +182,7 @@
 .presentation-mode__nav-btn {
   background: none;
   border: none;
-  color: white;
+  color: var(--color-on-surface, #1b1b1f);
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -190,7 +190,7 @@
   line-height: 1;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.08);
   }
 
   &:disabled {
@@ -209,9 +209,9 @@
   position: fixed;
   top: 1rem;
   right: 1rem;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.06);
   border: none;
-  color: white;
+  color: var(--color-on-surface, #1b1b1f);
   cursor: pointer;
   padding: 0.4rem 0.75rem;
   border-radius: 6px;
@@ -225,6 +225,6 @@
   }
 
   &:hover {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.12);
   }
 }
