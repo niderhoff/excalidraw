@@ -2,22 +2,37 @@ services:
   excalidraw:
     build:
       context: .
-      args:
-        - NODE_ENV=development
     container_name: excalidraw
-    ports:
-      - "3000:80"
-    restart: on-failure
-    stdin_open: true
-    healthcheck:
-      disable: true
+    # No public ports — only reachable via Nginx within the Docker network.
+    # For local dev without Nginx, uncomment the ports section below.
+    # ports:
+    #   - "3100:3100"
+    expose:
+      - "3100"
+    restart: unless-stopped
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
+      - DATABASE_PATH=/data/excalidraw.db
+      # Cloudflare R2 — required for binary file storage in production
+      - R2_ENDPOINT=${R2_ENDPOINT}
+      - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
+      - R2_BUCKET=${R2_BUCKET:-excalidraw-files}
     volumes:
-      - ./:/opt/node_app/app:delegated
-      - ./package.json:/opt/node_app/package.json
-      - ./yarn.lock:/opt/node_app/yarn.lock
-      - notused:/opt/node_app/app/node_modules
+      - excalidraw-data:/data
+    healthcheck:
+      test:
+        ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3100/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
 
 volumes:
-  notused:
+  excalidraw-data:

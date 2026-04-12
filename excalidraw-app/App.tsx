@@ -42,9 +42,7 @@ import {
   GithubIcon,
   XBrandIcon,
   DiscordIcon,
-  ExcalLogo,
   usersIcon,
-  exportToPlus,
   share,
   youtubeIcon,
 } from "@excalidraw/excalidraw/components/icons";
@@ -90,7 +88,6 @@ import {
 } from "./app-jotai";
 import {
   FIREBASE_STORAGE_PREFIXES,
-  isExcalidrawPlusSignedUser,
   STORAGE_KEYS,
   SYNC_BROWSER_TABS_TIMEOUT,
 } from "./app_constants";
@@ -102,10 +99,7 @@ import Collab, {
 import { AppFooter } from "./components/AppFooter";
 import { AppMainMenu } from "./components/AppMainMenu";
 import { AppWelcomeScreen } from "./components/AppWelcomeScreen";
-import {
-  ExportToExcalidrawPlus,
-  exportToExcalidrawPlus,
-} from "./components/ExportToExcalidrawPlus";
+// ExportToExcalidrawPlus removed for self-hosted version
 import { TopErrorBoundary } from "./components/TopErrorBoundary";
 
 import {
@@ -145,8 +139,11 @@ import { ExcalidrawPlusIframeExport } from "./ExcalidrawPlusIframeExport";
 
 import "./index.scss";
 
-import { ExcalidrawPlusPromoBanner } from "./components/ExcalidrawPlusPromoBanner";
+// ExcalidrawPlusPromoBanner removed for self-hosted version
 import { AppSidebar } from "./components/AppSidebar";
+import { CloudData } from "./data/CloudData";
+import { cloudSceneAtom } from "./stores/currentSceneAtom";
+import { getScene as apiGetScene } from "./apiClient/scenes";
 
 import type { CollabAPI } from "./collab/Collab";
 
@@ -371,8 +368,9 @@ const initializeScene = async (opts: {
   return { scene: null, isExternalScene: false };
 };
 
-const ExcalidrawWrapper = () => {
+const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
   const excalidrawAPI = useExcalidrawAPI();
+  const isCloudScene = !!sceneId;
 
   const [errorMessage, setErrorMessage] = useState("");
   const isCollabDisabled = isRunningInIframe();
@@ -496,7 +494,10 @@ const ExcalidrawWrapper = () => {
           });
         } else if (isInitialLoad) {
           if (fileIds.length) {
-            LocalData.fileStorage
+            const fileManager = isCloudScene
+              ? CloudData.fileStorage
+              : LocalData.fileStorage;
+            fileManager
               .getFiles(fileIds)
               .then(async ({ loadedFiles, erroredFiles }) => {
                 if (loadedFiles.length) {
@@ -509,15 +510,17 @@ const ExcalidrawWrapper = () => {
                 });
               });
           }
-          // on fresh load, clear unused files from IDB (from previous
-          // session)
-          LocalData.fileStorage.clearObsoleteFiles({
-            currentFileIds: fileIds,
-          });
+          if (!isCloudScene) {
+            // on fresh load, clear unused files from IDB (from previous
+            // session)
+            LocalData.fileStorage.clearObsoleteFiles({
+              currentFileIds: fileIds,
+            });
+          }
         }
       }
     },
-    [collabAPI, excalidrawAPI],
+    [collabAPI, excalidrawAPI, isCloudScene],
   );
 
   useEffect(() => {
@@ -525,6 +528,74 @@ const ExcalidrawWrapper = () => {
       return;
     }
 
+    // Cloud scene: load from server API
+    if (isCloudScene && sceneId) {
+      apiGetScene(sceneId)
+        .then((scene) => {
+          // Set cloud scene state atom
+          appJotaiStore.set(cloudSceneAtom, {
+            id: scene.id,
+            title: scene.title,
+            folderId: scene.folderId,
+            sceneVersion: scene.sceneVersion,
+            saveStatus: "idle",
+          });
+
+          const data = {
+            scene: {
+              elements: restoreElements(scene.elements, null, {
+                repairBindings: true,
+                deleteInvisibleElements: true,
+              }),
+              appState: restoreAppState(scene.appState, null),
+              scrollToContent: true,
+            },
+            isExternalScene: false as const,
+          };
+
+          loadImages(data, /* isInitialLoad */ true);
+          initialStatePromiseRef.current.promise.resolve(data.scene);
+
+          // Load binary files from server
+          if (scene.files && scene.files.length > 0) {
+            const fileIds = scene.files.map((f) => f.id as FileId);
+            FileStatusStore.updateStatuses(
+              fileIds.map((id) => [id, "loading"]),
+            );
+            CloudData.fileStorage
+              .getFiles(fileIds)
+              .then(({ loadedFiles, erroredFiles }) => {
+                if (loadedFiles.length) {
+                  excalidrawAPI.addFiles(loadedFiles);
+                }
+                updateStaleImageStatuses({
+                  excalidrawAPI,
+                  erroredFiles,
+                  elements: excalidrawAPI.getSceneElementsIncludingDeleted(),
+                });
+                FileStatusStore.updateStatuses([
+                  ...loadedFiles.map(
+                    (f) => [f.id, "loaded"] as [FileId, "loaded"],
+                  ),
+                  ...[...erroredFiles.keys()].map(
+                    (id) => [id, "error"] as [FileId, "error"],
+                  ),
+                ]);
+              });
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to load cloud scene:", error);
+          initialStatePromiseRef.current.promise.resolve({
+            appState: {
+              errorMessage: `Failed to load scene: ${error.message}`,
+            },
+          });
+        });
+      return; // skip local/collab initialization
+    }
+
+    // Local scene: existing behavior
     initializeScene({ collabAPI, excalidrawAPI }).then(async (data) => {
       loadImages(data, /* isInitialLoad */ true);
       initialStatePromiseRef.current.promise.resolve(data.scene);
@@ -617,12 +688,20 @@ const ExcalidrawWrapper = () => {
     }, SYNC_BROWSER_TABS_TIMEOUT);
 
     const onUnload = () => {
-      LocalData.flushSave();
+      if (isCloudScene) {
+        CloudData.flushSave();
+      } else {
+        LocalData.flushSave();
+      }
     };
 
     const visibilityChange = (event: FocusEvent | Event) => {
       if (event.type === EVENT.BLUR || document.hidden) {
-        LocalData.flushSave();
+        if (isCloudScene) {
+          CloudData.flushSave();
+        } else {
+          LocalData.flushSave();
+        }
       }
       if (
         event.type === EVENT.VISIBILITY_CHANGE ||
@@ -648,17 +727,30 @@ const ExcalidrawWrapper = () => {
         false,
       );
     };
-  }, [isCollabDisabled, collabAPI, excalidrawAPI, setLangCode, loadImages]);
+  }, [
+    isCollabDisabled,
+    collabAPI,
+    excalidrawAPI,
+    setLangCode,
+    loadImages,
+    isCloudScene,
+    sceneId,
+  ]);
 
   useEffect(() => {
     const unloadHandler = (event: BeforeUnloadEvent) => {
-      LocalData.flushSave();
+      if (isCloudScene) {
+        CloudData.flushSave();
+      } else {
+        LocalData.flushSave();
+      }
 
+      const fileStorage = isCloudScene
+        ? CloudData.fileStorage
+        : LocalData.fileStorage;
       if (
         excalidrawAPI &&
-        LocalData.fileStorage.shouldPreventUnload(
-          excalidrawAPI.getSceneElements(),
-        )
+        fileStorage.shouldPreventUnload(excalidrawAPI.getSceneElements())
       ) {
         if (import.meta.env.VITE_APP_DISABLE_PREVENT_UNLOAD !== "true") {
           preventUnload(event);
@@ -673,7 +765,7 @@ const ExcalidrawWrapper = () => {
     return () => {
       window.removeEventListener(EVENT.BEFORE_UNLOAD, unloadHandler);
     };
-  }, [excalidrawAPI]);
+  }, [excalidrawAPI, isCloudScene]);
 
   const onChange = (
     elements: readonly OrderedExcalidrawElement[],
@@ -684,19 +776,21 @@ const ExcalidrawWrapper = () => {
       collabAPI.syncElements(elements);
     }
 
-    // this check is redundant, but since this is a hot path, it's best
-    // not to evaludate the nested expression every time
-    if (!LocalData.isSavePaused()) {
-      LocalData.save(elements, appState, files, () => {
+    // Choose persistence layer based on whether this is a cloud scene
+    const dataLayer = isCloudScene ? CloudData : LocalData;
+    const fileStorage = isCloudScene
+      ? CloudData.fileStorage
+      : LocalData.fileStorage;
+
+    if (!dataLayer.isSavePaused()) {
+      dataLayer.save(elements, appState, files, () => {
         if (excalidrawAPI) {
           let didChange = false;
 
           const elements = excalidrawAPI
             .getSceneElementsIncludingDeleted()
             .map((element) => {
-              if (
-                LocalData.fileStorage.shouldUpdateImageElementStatus(element)
-              ) {
+              if (fileStorage.shouldUpdateImageElementStatus(element)) {
                 const newElement = newElementWith(element, { status: "saved" });
                 if (newElement !== element) {
                   didChange = true;
@@ -862,45 +956,6 @@ const ExcalidrawWrapper = () => {
     );
   }
 
-  const ExcalidrawPlusCommand = {
-    label: "Excalidraw+",
-    category: DEFAULT_CATEGORIES.links,
-    predicate: true,
-    icon: <div style={{ width: 14 }}>{ExcalLogo}</div>,
-    keywords: ["plus", "cloud", "server"],
-    perform: () => {
-      window.open(
-        `${
-          import.meta.env.VITE_APP_PLUS_LP
-        }/plus?utm_source=excalidraw&utm_medium=app&utm_content=command_palette`,
-        "_blank",
-      );
-    },
-  };
-  const ExcalidrawPlusAppCommand = {
-    label: "Sign up",
-    category: DEFAULT_CATEGORIES.links,
-    predicate: true,
-    icon: <div style={{ width: 14 }}>{ExcalLogo}</div>,
-    keywords: [
-      "excalidraw",
-      "plus",
-      "cloud",
-      "server",
-      "signin",
-      "login",
-      "signup",
-    ],
-    perform: () => {
-      window.open(
-        `${
-          import.meta.env.VITE_APP_PLUS_APP
-        }?utm_source=excalidraw&utm_medium=app&utm_content=command_palette`,
-        "_blank",
-      );
-    },
-  };
-
   return (
     <div
       style={{ height: "100%" }}
@@ -919,30 +974,6 @@ const ExcalidrawWrapper = () => {
             toggleTheme: true,
             export: {
               onExportToBackend,
-              renderCustomUI: excalidrawAPI
-                ? (elements, appState, files) => {
-                    return (
-                      <ExportToExcalidrawPlus
-                        elements={elements}
-                        appState={appState}
-                        files={files}
-                        name={excalidrawAPI.getName()}
-                        onError={(error) => {
-                          excalidrawAPI?.updateScene({
-                            appState: {
-                              errorMessage: error.message,
-                            },
-                          });
-                        }}
-                        onSuccess={() => {
-                          excalidrawAPI.updateScene({
-                            appState: { openDialog: null },
-                          });
-                        }}
-                      />
-                    );
-                  }
-                : undefined,
             },
           },
         }}
@@ -959,12 +990,6 @@ const ExcalidrawWrapper = () => {
 
           return (
             <div className="excalidraw-ui-top-right">
-              {excalidrawAPI?.getEditorInterface().formFactor === "desktop" && (
-                <ExcalidrawPlusPromoBanner
-                  isSignedIn={isExcalidrawPlusSignedUser}
-                />
-              )}
-
               {collabError.message && <CollabError collabError={collabError} />}
               <LiveCollaborationTrigger
                 isCollaborating={isCollaborating}
@@ -998,22 +1023,6 @@ const ExcalidrawWrapper = () => {
         <OverwriteConfirmDialog>
           <OverwriteConfirmDialog.Actions.ExportToImage />
           <OverwriteConfirmDialog.Actions.SaveToDisk />
-          {excalidrawAPI && (
-            <OverwriteConfirmDialog.Action
-              title={t("overwriteConfirm.action.excalidrawPlus.title")}
-              actionLabel={t("overwriteConfirm.action.excalidrawPlus.button")}
-              onClick={() => {
-                exportToExcalidrawPlus(
-                  excalidrawAPI.getSceneElements(),
-                  excalidrawAPI.getAppState(),
-                  excalidrawAPI.getFiles(),
-                  excalidrawAPI.getName(),
-                );
-              }}
-            >
-              {t("overwriteConfirm.action.excalidrawPlus.description")}
-            </OverwriteConfirmDialog.Action>
-          )}
         </OverwriteConfirmDialog>
         <AppFooter onChange={() => excalidrawAPI?.refresh()} />
         {excalidrawAPI && <AIComponents excalidrawAPI={excalidrawAPI} />}
@@ -1203,32 +1212,6 @@ const ExcalidrawWrapper = () => {
                 );
               },
             },
-            ...(isExcalidrawPlusSignedUser
-              ? [
-                  {
-                    ...ExcalidrawPlusAppCommand,
-                    label: "Sign in / Go to Excalidraw+",
-                  },
-                ]
-              : [ExcalidrawPlusCommand, ExcalidrawPlusAppCommand]),
-
-            {
-              label: t("overwriteConfirm.action.excalidrawPlus.button"),
-              category: DEFAULT_CATEGORIES.export,
-              icon: exportToPlus,
-              predicate: true,
-              keywords: ["plus", "export", "save", "backup"],
-              perform: () => {
-                if (excalidrawAPI) {
-                  exportToExcalidrawPlus(
-                    excalidrawAPI.getSceneElements(),
-                    excalidrawAPI.getAppState(),
-                    excalidrawAPI.getFiles(),
-                    excalidrawAPI.getName(),
-                  );
-                }
-              },
-            },
             {
               ...CommandPalette.defaultItems.toggleTheme,
               perform: () => {
@@ -1266,7 +1249,7 @@ const ExcalidrawWrapper = () => {
   );
 };
 
-const ExcalidrawApp = () => {
+const ExcalidrawApp = ({ sceneId }: { sceneId?: string } = {}) => {
   const isCloudExportWindow =
     window.location.pathname === "/excalidraw-plus-export";
   if (isCloudExportWindow) {
@@ -1277,7 +1260,7 @@ const ExcalidrawApp = () => {
     <TopErrorBoundary>
       <Provider store={appJotaiStore}>
         <ExcalidrawAPIProvider>
-          <ExcalidrawWrapper />
+          <ExcalidrawWrapper sceneId={sceneId} />
         </ExcalidrawAPIProvider>
       </Provider>
     </TopErrorBoundary>
