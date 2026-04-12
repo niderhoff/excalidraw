@@ -18,6 +18,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
 
   if (!response.ok) {
+    // Session expired — reload page to trigger Authelia redirect
+    if (response.status === 401) {
+      window.location.reload();
+      // Never resolves — page is reloading
+      return new Promise<never>(() => {});
+    }
     let data;
     try {
       data = await response.json();
