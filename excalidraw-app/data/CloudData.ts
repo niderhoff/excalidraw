@@ -30,7 +30,7 @@ import { FileStatusStore } from "./fileStatusStore";
 import { FileManager } from "./FileManager";
 
 const SAVE_DEBOUNCE_MS = SAVE_TO_LOCAL_STORAGE_TIMEOUT; // 300ms
-const THUMBNAIL_DEBOUNCE_MS = 2000;
+const THUMBNAIL_DEBOUNCE_MS = 30000;
 
 export class CloudData {
   private static _save = debounce(
