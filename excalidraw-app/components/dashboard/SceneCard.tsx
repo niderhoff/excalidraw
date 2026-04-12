@@ -30,6 +30,7 @@ function formatDate(timestamp: number): string {
 
 export const SceneCard = ({
   scene,
+  folderName,
   selected,
   onToggleSelect,
   onRename,
@@ -38,6 +39,7 @@ export const SceneCard = ({
   onMove,
 }: {
   scene: SceneMeta;
+  folderName?: string;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
   onRename: (id: string, title: string) => void;
@@ -159,6 +161,11 @@ export const SceneCard = ({
           <span className="dashboard-scene-card__title">{scene.title}</span>
         )}
         <span className="dashboard-scene-card__date">
+          {folderName && (
+            <span className="dashboard-scene-card__folder">
+              {folderName} &middot;{" "}
+            </span>
+          )}
           {formatDate(scene.updatedAt)}
         </span>
       </div>

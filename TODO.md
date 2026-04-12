@@ -24,7 +24,7 @@
 - [x] Auto-redirect to Authelia on session expiry (401 → reload)
 - [x] Dashboard: drag scenes into folders
 - [x] Dashboard: bulk select + bulk delete/move (Ctrl/Cmd+click to select)
-- [ ] Dashboard: sort by folder name in scene list
+- [x] Dashboard: sort by folder name in scene list
 - [ ] Offline support / graceful degradation when server unreachable
 
 ## high priority features

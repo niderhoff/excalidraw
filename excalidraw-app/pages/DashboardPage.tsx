@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useLocation } from "wouter";
 
 import { STORAGE_KEYS } from "../app_constants";
@@ -43,7 +49,7 @@ export const DashboardPage = () => {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<
-    "updatedAt" | "createdAt" | "title"
+    "updatedAt" | "createdAt" | "title" | "folder"
   >("updatedAt");
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -67,10 +73,11 @@ export const DashboardPage = () => {
   // Fetch scenes
   const fetchScenes = useCallback(async () => {
     try {
+      const serverSort = sortField === "folder" ? "updatedAt" : sortField;
       const data = await listScenes({
         folderId: currentFolderId,
-        sort: sortField,
-        order: sortField === "title" ? "asc" : "desc",
+        sort: serverSort,
+        order: serverSort === "title" ? "asc" : "desc",
         q: searchQuery || undefined,
       });
       setScenes(data);
@@ -246,6 +253,19 @@ export const DashboardPage = () => {
     fetchScenes();
   }, [selectedIds, fetchScenes]);
 
+  // Client-side sort by folder name
+  const sortedScenes = useMemo(() => {
+    if (sortField !== "folder") {
+      return scenes;
+    }
+    const folderMap = new Map(folders.map((f) => [f.id, f.name]));
+    return [...scenes].sort((a, b) => {
+      const aName = a.folderId ? folderMap.get(a.folderId) || "" : "";
+      const bName = b.folderId ? folderMap.get(b.folderId) || "" : "";
+      return aName.localeCompare(bName);
+    });
+  }, [scenes, folders, sortField]);
+
   const folderName =
     currentFolderId === null
       ? "All Drawings"
@@ -310,12 +330,13 @@ export const DashboardPage = () => {
               <option value="updatedAt">Last modified</option>
               <option value="createdAt">Date created</option>
               <option value="title">Title</option>
+              <option value="folder">Folder</option>
             </select>
           </div>
 
           {loading ? (
             <div className="dashboard__empty">Loading...</div>
-          ) : scenes.length === 0 ? (
+          ) : sortedScenes.length === 0 ? (
             <div className="dashboard__empty">
               <svg
                 width="64"
@@ -363,10 +384,15 @@ export const DashboardPage = () => {
                 </div>
               )}
               <div className="dashboard__scene-grid">
-                {scenes.map((scene) => (
+                {sortedScenes.map((scene) => (
                   <SceneCard
                     key={scene.id}
                     scene={scene}
+                    folderName={
+                      !currentFolderId && scene.folderId
+                        ? folders.find((f) => f.id === scene.folderId)?.name
+                        : undefined
+                    }
                     selected={selectedIds.has(scene.id)}
                     onToggleSelect={handleToggleSelect}
                     onRename={handleRenameScene}
