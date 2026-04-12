@@ -103,6 +103,54 @@
   }
 }
 
+// Bulk action bar
+.dashboard__bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--island-bg-color, #fff);
+  border-radius: var(--border-radius-lg, 0.5rem);
+  box-shadow: var(
+    --shadow-island,
+    0px 0px 1px rgba(0, 0, 0, 0.17),
+    0px 0px 3px rgba(0, 0, 0, 0.08)
+  );
+  font-size: 0.8rem;
+  font-family: inherit;
+
+  span {
+    font-weight: 600;
+    margin-right: 0.25rem;
+  }
+
+  button {
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--border-radius-md, 0.375rem);
+    font-size: 0.75rem;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid var(--default-border-color, #e0e0e0);
+    background: var(--island-bg-color, #fff);
+    color: inherit;
+
+    &:hover {
+      background: var(--button-hover-bg, #f1f0ff);
+    }
+  }
+}
+
+.dashboard__bulk-bar__delete {
+  color: var(--color-danger, #db6965) !important;
+  border-color: var(--color-danger, #db6965) !important;
+
+  &:hover {
+    background: var(--color-danger, #db6965) !important;
+    color: #fff !important;
+  }
+}
+
 .dashboard__sort {
   padding: 0.375rem 0.5rem;
   padding-inline-end: 1.5rem;
@@ -144,9 +192,7 @@
   border-radius: 0.75rem;
   overflow: hidden;
   cursor: pointer;
-  transition:
-    box-shadow 0.15s,
-    border-color 0.15s;
+  transition: box-shadow 0.15s, border-color 0.15s;
   position: relative;
   box-shadow: var(
     --shadow-island,
@@ -164,6 +210,17 @@
       0px 7px 14px rgb(0 0 0 / 18%)
     );
     border-color: var(--color-primary, #6965db);
+  }
+
+  &--selected {
+    border-color: var(--color-primary, #6965db);
+    box-shadow: 0 0 0 2px var(--color-primary, #6965db),
+      var(
+        --shadow-island,
+        0px 0px 1px rgba(0, 0, 0, 0.17),
+        0px 0px 3px rgba(0, 0, 0, 0.08),
+        0px 7px 14px rgba(0, 0, 0, 0.05)
+      );
   }
 }
 
@@ -335,6 +392,12 @@
     background: var(--color-primary-light, #e3e2fe);
     color: var(--color-primary, #6965db);
     font-weight: 600;
+  }
+
+  &.drop-target {
+    background: var(--color-primary-light, #e3e2fe);
+    outline: 2px dashed var(--color-primary, #6965db);
+    outline-offset: -2px;
   }
 
   svg {

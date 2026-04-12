@@ -30,12 +30,16 @@ function formatDate(timestamp: number): string {
 
 export const SceneCard = ({
   scene,
+  selected,
+  onToggleSelect,
   onRename,
   onDuplicate,
   onDelete,
   onMove,
 }: {
   scene: SceneMeta;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
   onRename: (id: string, title: string) => void;
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
@@ -48,11 +52,21 @@ export const SceneCard = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleClick = useCallback(() => {
-    if (!isRenaming) {
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (isRenaming) {
+        return;
+      }
+      // Ctrl/Cmd+click toggles selection
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        onToggleSelect?.(scene.id);
+        return;
+      }
       navigate(`/scene/${scene.id}`);
-    }
-  }, [navigate, scene.id, isRenaming]);
+    },
+    [navigate, scene.id, isRenaming, onToggleSelect],
+  );
 
   const handleMenuClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,8 +101,23 @@ export const SceneCard = ({
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
+  const handleDragStart = useCallback(
+    (e: React.DragEvent) => {
+      e.dataTransfer.setData("application/x-scene-id", scene.id);
+      e.dataTransfer.effectAllowed = "move";
+    },
+    [scene.id],
+  );
+
   return (
-    <div className="dashboard-scene-card" onClick={handleClick}>
+    <div
+      className={`dashboard-scene-card ${
+        selected ? "dashboard-scene-card--selected" : ""
+      }`}
+      onClick={handleClick}
+      draggable
+      onDragStart={handleDragStart}
+    >
       <div className="dashboard-scene-card__thumbnail">
         {scene.thumbnail ? (
           <img src={scene.thumbnail} alt={scene.title} />

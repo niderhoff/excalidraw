@@ -38,10 +38,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { loadFromBlob } from "@excalidraw/excalidraw/data/blob";
 import { t } from "@excalidraw/excalidraw/i18n";
 
-import {
-  usersIcon,
-  share,
-} from "@excalidraw/excalidraw/components/icons";
+import { usersIcon, share } from "@excalidraw/excalidraw/components/icons";
 import { isElementLink } from "@excalidraw/element";
 import {
   bumpElementVersions,
@@ -983,9 +980,7 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
         handleKeyboardGlobally={true}
         autoFocus={true}
         theme={editorTheme}
-        renderTopLeftUI={() =>
-          isCloudScene ? <SceneTitle /> : null
-        }
+        renderTopLeftUI={() => (isCloudScene ? <SceneTitle /> : null)}
         renderTopRightUI={(isMobile) => {
           if (isMobile || !collabAPI || isCollabDisabled) {
             return null;

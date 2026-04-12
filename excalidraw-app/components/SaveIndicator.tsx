@@ -19,10 +19,10 @@ export const SaveIndicator = () => {
         saveStatus === "saving"
           ? "Saving..."
           : saveStatus === "saved"
-            ? "All changes saved"
-            : saveStatus === "error"
-              ? "Save failed"
-              : ""
+          ? "All changes saved"
+          : saveStatus === "error"
+          ? "Save failed"
+          : ""
       }
     >
       {saveStatus === "saving" && (

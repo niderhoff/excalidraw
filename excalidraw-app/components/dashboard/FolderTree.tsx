@@ -11,6 +11,7 @@ export const FolderTree = ({
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
+  onDropScene,
 }: {
   folders: Folder[];
   currentFolderId: string | null;
@@ -18,7 +19,11 @@ export const FolderTree = ({
   onCreateFolder: (name: string, parentId?: string | null) => void;
   onRenameFolder: (id: string, name: string) => void;
   onDeleteFolder: (id: string) => void;
+  onDropScene: (sceneId: string, folderId: string | null) => void;
 }) => {
+  const [dropTargetId, setDropTargetId] = useState<string | "root" | null>(
+    null,
+  );
   const [isCreating, setIsCreating] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -73,8 +78,22 @@ export const FolderTree = ({
       <button
         className={`dashboard-folder-tree__item ${
           currentFolderId === null ? "active" : ""
-        }`}
+        } ${dropTargetId === "root" ? "drop-target" : ""}`}
         onClick={() => onSelectFolder(null)}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          setDropTargetId("root");
+        }}
+        onDragLeave={() => setDropTargetId(null)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDropTargetId(null);
+          const sceneId = e.dataTransfer.getData("application/x-scene-id");
+          if (sceneId) {
+            onDropScene(sceneId, null);
+          }
+        }}
       >
         <svg
           width="16"
@@ -118,11 +137,27 @@ export const FolderTree = ({
             <button
               className={`dashboard-folder-tree__item ${
                 currentFolderId === folder.id ? "active" : ""
-              }`}
+              } ${dropTargetId === folder.id ? "drop-target" : ""}`}
               onClick={() => onSelectFolder(folder.id)}
               onContextMenu={(e) => {
                 e.preventDefault();
                 setContextMenuId(folder.id);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                setDropTargetId(folder.id);
+              }}
+              onDragLeave={() => setDropTargetId(null)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDropTargetId(null);
+                const sceneId = e.dataTransfer.getData(
+                  "application/x-scene-id",
+                );
+                if (sceneId) {
+                  onDropScene(sceneId, folder.id);
+                }
               }}
             >
               <svg

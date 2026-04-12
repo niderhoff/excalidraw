@@ -46,6 +46,7 @@ export const DashboardPage = () => {
     "updatedAt" | "createdAt" | "title"
   >("updatedAt");
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Sync theme with editor's localStorage setting
   useLayoutEffect(() => {
@@ -134,8 +135,33 @@ export const DashboardPage = () => {
     setMoveFolderId(null);
   }, []);
 
+  const handleBulkMove = useCallback(
+    async (folderId: string | null) => {
+      await Promise.all(
+        [...selectedIds].map((id) => {
+          const scene = scenes.find((s) => s.id === id);
+          if (!scene) {
+            return Promise.resolve();
+          }
+          return updateScene(id, {
+            folderId,
+            sceneVersion: scene.sceneVersion,
+          });
+        }),
+      );
+      setSelectedIds(new Set());
+      setMoveDialogSceneId(null);
+      fetchScenes();
+    },
+    [selectedIds, scenes, fetchScenes],
+  );
+
   const handleMoveConfirm = useCallback(async () => {
     if (!moveDialogSceneId) {
+      return;
+    }
+    if (moveDialogSceneId === "__bulk__") {
+      await handleBulkMove(moveFolderId);
       return;
     }
     const scene = scenes.find((s) => s.id === moveDialogSceneId);
@@ -148,7 +174,7 @@ export const DashboardPage = () => {
     });
     setMoveDialogSceneId(null);
     fetchScenes();
-  }, [moveDialogSceneId, moveFolderId, scenes, fetchScenes]);
+  }, [moveDialogSceneId, moveFolderId, scenes, fetchScenes, handleBulkMove]);
 
   // Folder actions
   const handleCreateFolder = useCallback(
@@ -181,6 +207,44 @@ export const DashboardPage = () => {
     },
     [currentFolderId, fetchFolders, fetchScenes],
   );
+
+  // Drag-and-drop: move scene to folder
+  const handleDropScene = useCallback(
+    async (sceneId: string, folderId: string | null) => {
+      const scene = scenes.find((s) => s.id === sceneId);
+      if (!scene) {
+        return;
+      }
+      await updateScene(sceneId, {
+        folderId,
+        sceneVersion: scene.sceneVersion,
+      });
+      fetchScenes();
+    },
+    [scenes, fetchScenes],
+  );
+
+  // Bulk selection
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleBulkDelete = useCallback(async () => {
+    if (!window.confirm(`Delete ${selectedIds.size} drawing(s)?`)) {
+      return;
+    }
+    await Promise.all([...selectedIds].map((id) => deleteScene(id)));
+    setSelectedIds(new Set());
+    fetchScenes();
+  }, [selectedIds, fetchScenes]);
 
   const folderName =
     currentFolderId === null
@@ -225,6 +289,7 @@ export const DashboardPage = () => {
             onCreateFolder={handleCreateFolder}
             onRenameFolder={handleRenameFolder}
             onDeleteFolder={handleDeleteFolder}
+            onDropScene={handleDropScene}
           />
         </div>
 
@@ -276,18 +341,42 @@ export const DashboardPage = () => {
               </button>
             </div>
           ) : (
-            <div className="dashboard__scene-grid">
-              {scenes.map((scene) => (
-                <SceneCard
-                  key={scene.id}
-                  scene={scene}
-                  onRename={handleRenameScene}
-                  onDuplicate={handleDuplicateScene}
-                  onDelete={handleDeleteScene}
-                  onMove={handleMoveScene}
-                />
-              ))}
-            </div>
+            <>
+              {selectedIds.size > 0 && (
+                <div className="dashboard__bulk-bar">
+                  <span>{selectedIds.size} selected</span>
+                  <button
+                    className="dashboard__btn-primary"
+                    onClick={() => setMoveDialogSceneId("__bulk__")}
+                  >
+                    Move
+                  </button>
+                  <button
+                    className="dashboard__bulk-bar__delete"
+                    onClick={handleBulkDelete}
+                  >
+                    Delete
+                  </button>
+                  <button onClick={() => setSelectedIds(new Set())}>
+                    Cancel
+                  </button>
+                </div>
+              )}
+              <div className="dashboard__scene-grid">
+                {scenes.map((scene) => (
+                  <SceneCard
+                    key={scene.id}
+                    scene={scene}
+                    selected={selectedIds.has(scene.id)}
+                    onToggleSelect={handleToggleSelect}
+                    onRename={handleRenameScene}
+                    onDuplicate={handleDuplicateScene}
+                    onDelete={handleDeleteScene}
+                    onMove={handleMoveScene}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

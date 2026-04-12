@@ -175,7 +175,9 @@ export const PresentationMode = ({
 
   return (
     <div
-      className={`presentation-mode ${darkMode ? "presentation-mode--dark" : ""}`}
+      className={`presentation-mode ${
+        darkMode ? "presentation-mode--dark" : ""
+      }`}
       ref={containerRef}
       onClick={handleClick}
     >

@@ -172,16 +172,8 @@
   border-radius: 0.625rem;
   color: #e0e0e0;
   font-size: 0.8rem;
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    0 0 1px rgba(0, 0, 0, 0.3);
-  font-family: var(
-    --ui-font,
-    Assistant,
-    system-ui,
-    -apple-system,
-    sans-serif
-  );
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.3);
+  font-family: var(--ui-font, Assistant, system-ui, -apple-system, sans-serif);
 }
 
 .presentation-mode__tool-btn {

@@ -18,14 +18,14 @@
 
 ### Polish / Improvements
 
-- [ ] Save status indicator in editor (show saving/saved/error)
-- [ ] Dashboard: drag scenes into folders
-- [ ] Dashboard: bulk select + bulk delete/move
-- [ ] Dashboard: sort by folder name in scene list
-- [ ] Presentation: remember slide order overrides (manual reorder in sidebar)
+- [x] Save status indicator in editor (saving/saved/error in footer)
+- [x] Scene title editing from the editor (click title in top-left)
 - [x] Presentation: using frame tool without dragging (just click) creates a 1920x1080 frame
+- [x] Auto-redirect to Authelia on session expiry (401 → reload)
+- [x] Dashboard: drag scenes into folders
+- [x] Dashboard: bulk select + bulk delete/move (Ctrl/Cmd+click to select)
+- [ ] Dashboard: sort by folder name in scene list
 - [ ] Offline support / graceful degradation when server unreachable
-- [ ] Scene title editing from the editor (not just dashboard)
 
 ## high priority features
 
@@ -34,19 +34,19 @@
 
 ## low priority features
 
+- [ ] download presentation PDF and PPT (even with read-only link)
+- [ ] Real-time link-based collaboration (should we use impelemnt it client side only or server-side?)
+
 ## technical debt
 
-[ ] sqlite database backups
+- [ ] sqlite database backups to R2 (with litestream)
 
 ## Out of Scope (Future Considerations)
 
 - [ ] Team management and multiple accounts
-- [ ] Real-time link-based collaboration
-- [ ] Database backups
 - [ ] Trash system with scheduled deletion
 - [ ] Voice features
 - [ ] Comments / reactions
 - [ ] Email notifications
+- [ ] Presentation: remember slide order overrides (manual reorder in sidebar)
 - [ ] Real-time presentations (multi-client sync)
-- [ ] Export to PDF and PPT
-

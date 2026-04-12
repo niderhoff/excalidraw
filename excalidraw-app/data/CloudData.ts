@@ -102,10 +102,7 @@ export class CloudData {
 
   // Generate and save a thumbnail (debounced separately, less frequent)
   private static _saveThumbnail = debounce(
-    async (
-      elements: readonly ExcalidrawElement[],
-      files: BinaryFiles,
-    ) => {
+    async (elements: readonly ExcalidrawElement[], files: BinaryFiles) => {
       const sceneState = appJotaiStore.get(cloudSceneAtom);
       if (!sceneState?.id) {
         return;
