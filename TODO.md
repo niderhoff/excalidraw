@@ -29,7 +29,7 @@
 
 ## high priority features
 
-- [ ] Read-only link sharing
+- [x] Read-only link sharing (crypto-random tokens, configurable expiry, revocable)
 - [ ] enable AI feature by allowing to set opanAI api key.(store it safely in the account data)
 
 ## low priority features

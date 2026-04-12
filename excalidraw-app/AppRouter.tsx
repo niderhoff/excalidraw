@@ -3,6 +3,7 @@ import { Router, Route, Switch, Redirect } from "wouter";
 import { EditorPage } from "./pages/EditorPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { PresentationPage } from "./pages/PresentationPage";
+import { SharedViewPage } from "./pages/SharedViewPage";
 
 const LAST_SCENE_KEY = "excalidraw-last-scene-id";
 
@@ -34,6 +35,7 @@ export const AppRouter = () => {
         <Route path="/scene/new" component={EditorPage} />
         <Route path="/scene/:id" component={EditorPage} />
         <Route path="/present/:id" component={PresentationPage} />
+        <Route path="/shared/:token" component={SharedViewPage} />
         <Route>
           <HomePage />
         </Route>

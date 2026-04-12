@@ -59,6 +59,15 @@ await client.execute(`
   )
 `);
 
+await client.execute(`
+  CREATE TABLE IF NOT EXISTS share_links (
+    token TEXT PRIMARY KEY,
+    scene_id TEXT NOT NULL REFERENCES scenes(id) ON DELETE CASCADE,
+    created_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL
+  )
+`);
+
 // Indexes for common queries
 await client.execute(
   "CREATE INDEX IF NOT EXISTS idx_scenes_folder_id ON scenes(folder_id)",
@@ -71,4 +80,10 @@ await client.execute(
 );
 await client.execute(
   "CREATE INDEX IF NOT EXISTS idx_folders_parent_id ON folders(parent_id)",
+);
+await client.execute(
+  "CREATE INDEX IF NOT EXISTS idx_share_links_scene_id ON share_links(scene_id)",
+);
+await client.execute(
+  "CREATE INDEX IF NOT EXISTS idx_share_links_expires_at ON share_links(expires_at)",
 );

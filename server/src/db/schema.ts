@@ -25,6 +25,15 @@ export const scenes = sqliteTable("scenes", {
   sceneVersion: integer("scene_version").notNull().default(0),
 });
 
+export const shareLinks = sqliteTable("share_links", {
+  token: text("token").primaryKey(), // crypto-random 32 bytes as hex (64 chars)
+  sceneId: text("scene_id")
+    .notNull()
+    .references(() => scenes.id, { onDelete: "cascade" }),
+  createdAt: integer("created_at", { mode: "number" }).notNull(),
+  expiresAt: integer("expires_at", { mode: "number" }).notNull(),
+});
+
 export const files = sqliteTable("files", {
   id: text("id").primaryKey(),
   sceneId: text("scene_id")

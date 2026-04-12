@@ -22,6 +22,10 @@ export default defineConfig(({ mode }) => {
           target: "http://localhost:3100",
           changeOrigin: true,
         },
+        "/public/": {
+          target: "http://localhost:3100",
+          changeOrigin: true,
+        },
       },
     },
     // We need to specify the envDir since now there are no

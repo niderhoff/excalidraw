@@ -91,6 +91,7 @@ import Collab, {
 } from "./collab/Collab";
 import { AppFooter } from "./components/AppFooter";
 import { SceneTitle } from "./components/SceneTitle";
+import { ShareLinkDialog } from "./components/ShareLinkDialog";
 import { AppMainMenu } from "./components/AppMainMenu";
 import { AppWelcomeScreen } from "./components/AppWelcomeScreen";
 // ExportToExcalidrawPlus removed for self-hosted version
@@ -821,6 +822,7 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
   const [latestShareableLink, setLatestShareableLink] = useState<string | null>(
     null,
   );
+  const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
 
   const onExportToBackend = async (
     exportedElements: readonly NonDeletedExcalidrawElement[],
@@ -988,6 +990,27 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
 
           return (
             <div className="excalidraw-ui-top-right">
+              {isCloudScene && (
+                <button
+                  className="share-link-btn"
+                  onClick={() => setShareLinkDialogOpen(true)}
+                  title="Share read-only link"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                  Share
+                </button>
+              )}
               {collabError.message && <CollabError collabError={collabError} />}
               <LiveCollaborationTrigger
                 isCollaborating={isCollaborating}
@@ -1065,6 +1088,10 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
         />
 
         <AppSidebar />
+
+        {shareLinkDialogOpen && (
+          <ShareLinkDialog onClose={() => setShareLinkDialogOpen(false)} />
+        )}
 
         {errorMessage && (
           <ErrorDialog onClose={() => setErrorMessage("")}>
