@@ -1,0 +1,60 @@
+.save-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-family: var(--ui-font, Assistant, system-ui, sans-serif);
+  color: var(--color-gray-60, #7a7a7a);
+  transition: opacity 0.3s;
+  user-select: none;
+
+  &--idle {
+    opacity: 0;
+  }
+
+  &--saving {
+    opacity: 1;
+    color: var(--color-gray-60, #7a7a7a);
+  }
+
+  &--saved {
+    opacity: 1;
+    color: var(--color-success-text, #268029);
+    animation: save-indicator-fade 3s ease forwards;
+  }
+
+  &--error {
+    opacity: 1;
+    color: var(--color-danger, #db6965);
+  }
+}
+
+.save-indicator__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: save-indicator-pulse 1s ease-in-out infinite;
+}
+
+@keyframes save-indicator-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes save-indicator-fade {
+  0% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

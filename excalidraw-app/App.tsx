@@ -93,6 +93,7 @@ import Collab, {
   isOfflineAtom,
 } from "./collab/Collab";
 import { AppFooter } from "./components/AppFooter";
+import { SceneTitle } from "./components/SceneTitle";
 import { AppMainMenu } from "./components/AppMainMenu";
 import { AppWelcomeScreen } from "./components/AppWelcomeScreen";
 // ExportToExcalidrawPlus removed for self-hosted version
@@ -982,6 +983,9 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
         handleKeyboardGlobally={true}
         autoFocus={true}
         theme={editorTheme}
+        renderTopLeftUI={() =>
+          isCloudScene ? <SceneTitle /> : null
+        }
         renderTopRightUI={(isMobile) => {
           if (isMobile || !collabAPI || isCollabDisabled) {
             return null;
