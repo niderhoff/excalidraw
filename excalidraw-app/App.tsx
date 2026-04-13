@@ -819,10 +819,10 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
   );
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
 
-  // Alt+D → Dashboard
+  // Cmd/Ctrl+Shift+D → Dashboard
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.altKey && e.key === "d") {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "d") {
         e.preventDefault();
         window.location.href = "/dashboard";
       }
