@@ -1,5 +1,12 @@
 @import "../packages/excalidraw/css/variables.module.scss";
 
+// Ensure portal containers (modals, dialogs) appended to document.body
+// inherit the correct font and styles from the main .excalidraw container
+.excalidraw-modal-container {
+  font-family: Assistant, system-ui, BlinkMacSystemFont, -apple-system,
+    Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+
 .excalidraw {
   --color-primary-contrast-offset: #625ee0; // to offset Chubb illusion
 
