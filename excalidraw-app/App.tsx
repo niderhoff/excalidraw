@@ -92,6 +92,7 @@ import Collab, {
 import { AppFooter } from "./components/AppFooter";
 import { SceneTitle } from "./components/SceneTitle";
 import { ShareLinkDialog } from "./components/ShareLinkDialog";
+import { SettingsDialog } from "./components/SettingsDialog";
 import { AppMainMenu } from "./components/AppMainMenu";
 import { AppWelcomeScreen } from "./components/AppWelcomeScreen";
 // ExportToExcalidrawPlus removed for self-hosted version
@@ -823,6 +824,7 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
     null,
   );
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
   const onExportToBackend = async (
     exportedElements: readonly NonDeletedExcalidrawElement[],
@@ -1036,6 +1038,7 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
           theme={appTheme}
           setTheme={(theme) => setAppTheme(theme)}
           refresh={() => forceRefresh((prev) => !prev)}
+          onOpenSettings={() => setSettingsDialogOpen(true)}
         />
         <AppWelcomeScreen
           onCollabDialogOpen={onCollabDialogOpen}
@@ -1091,6 +1094,10 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
 
         {shareLinkDialogOpen && (
           <ShareLinkDialog onClose={() => setShareLinkDialogOpen(false)} />
+        )}
+
+        {settingsDialogOpen && (
+          <SettingsDialog onClose={() => setSettingsDialogOpen(false)} />
         )}
 
         {errorMessage && (

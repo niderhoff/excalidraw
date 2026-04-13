@@ -60,6 +60,14 @@ await client.execute(`
 `);
 
 await client.execute(`
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+  )
+`);
+
+await client.execute(`
   CREATE TABLE IF NOT EXISTS share_links (
     token TEXT PRIMARY KEY,
     scene_id TEXT NOT NULL REFERENCES scenes(id) ON DELETE CASCADE,

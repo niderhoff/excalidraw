@@ -13,6 +13,8 @@ import {
   createSharesRouter,
   createPublicShareRouter,
 } from "./routes/shares.js";
+import { createAIRouter } from "./routes/ai.js";
+import { createSettingsRouter } from "./routes/settings.js";
 import { createStorage } from "./storage/index.js";
 
 // Initialize DB (runs mkdir + CREATE TABLE IF NOT EXISTS on import)
@@ -50,6 +52,8 @@ app.route("/api/scenes", createScenesRouter(storage));
 app.route("/api/folders", createFoldersRouter());
 app.route("/api/files", createFilesRouter(storage));
 app.route("/api/shares", createSharesRouter());
+app.route("/api/ai", createAIRouter());
+app.route("/api/settings", createSettingsRouter());
 
 // In production, serve the frontend static files
 if (process.env.NODE_ENV === "production") {
