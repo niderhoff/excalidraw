@@ -23,7 +23,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     // returns 302 to Authelia when unauthenticated. The ?rd= param
     // tells Authelia where to return after login.
     if (response.status === 401) {
-      window.location.href = `/auth-redirect?rd=${encodeURIComponent(window.location.href)}`;
+      window.location.href = `/auth-redirect?rd=${encodeURIComponent(
+        window.location.href,
+      )}`;
       return new Promise<never>(() => {});
     }
     let data;
