@@ -21,7 +21,7 @@ COPY . .
 
 ARG NODE_ENV=production
 
-RUN npm_config_target_arch=${TARGETARCH} yarn build:app:docker
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm_config_target_arch=${TARGETARCH} yarn build:app:docker
 
 # Stage 2: Build server
 FROM --platform=${BUILDPLATFORM} node:20-alpine AS server-build
