@@ -1,8 +1,10 @@
 import {
   Excalidraw,
+  LiveCollaborationTrigger,
   TTDDialogTrigger,
   CaptureUpdateAction,
   reconcileElements,
+  useEditorInterface,
   ExcalidrawAPIProvider,
   useExcalidrawAPI,
 } from "@excalidraw/excalidraw";
@@ -370,6 +372,8 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
   const { editorTheme, appTheme, setAppTheme } = useHandleAppTheme();
 
   const [langCode, setLangCode] = useAppLangCode();
+
+  const editorInterface = useEditorInterface();
 
   // initial state
   // ---------------------------------------------------------------------------
@@ -955,28 +959,14 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
 
           return (
             <div className="excalidraw-ui-top-right">
-              {isCloudScene && (
-                <button
-                  className="share-link-btn"
-                  onClick={() => setShareLinkDialogOpen(true)}
-                  title="Share read-only link"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-                    <polyline points="16 6 12 2 8 6" />
-                    <line x1="12" y1="2" x2="12" y2="15" />
-                  </svg>
-                  Share
-                </button>
-              )}
               {collabError.message && <CollabError collabError={collabError} />}
+              {isCloudScene && (
+                <LiveCollaborationTrigger
+                  isCollaborating={false}
+                  onSelect={() => setShareLinkDialogOpen(true)}
+                  editorInterface={editorInterface}
+                />
+              )}
             </div>
           );
         }}

@@ -157,24 +157,4 @@
       color: black !important;
     }
   }
-
-  .share-link-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.4rem 0.75rem;
-    border: 1px solid var(--default-border-color);
-    border-radius: var(--border-radius-lg);
-    background: var(--island-bg-color);
-    color: var(--color-on-surface);
-    font-size: 0.8rem;
-    font-weight: 600;
-    font-family: var(--ui-font);
-    cursor: pointer;
-
-    &:hover {
-      background: var(--button-hover-bg);
-      border-color: var(--color-primary);
-    }
-  }
 }
