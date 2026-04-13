@@ -5,7 +5,7 @@ export interface CloudSceneState {
   title: string;
   folderId: string | null;
   sceneVersion: number;
-  saveStatus: "idle" | "saving" | "saved" | "error";
+  saveStatus: "idle" | "saving" | "saved" | "error" | "offline";
 }
 
 /**

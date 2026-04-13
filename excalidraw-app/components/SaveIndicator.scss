@@ -23,6 +23,11 @@
     animation: save-indicator-fade 3s ease forwards;
   }
 
+  &--offline {
+    opacity: 1;
+    color: var(--color-warning-text, #b8860b);
+  }
+
   &--error {
     opacity: 1;
     color: var(--color-danger, #db6965);

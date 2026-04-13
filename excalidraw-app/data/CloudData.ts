@@ -1,6 +1,7 @@
 /**
  * Server-backed persistence layer, mirroring LocalData's interface.
- * Saves scene data to the backend API and binary files to R2 via /api/files.
+ * Saves to both server API and localStorage (write-through).
+ * Falls back to localStorage when offline, syncs when back online.
  */
 
 import { debounce } from "@excalidraw/common";
@@ -31,6 +32,59 @@ import { FileManager } from "./FileManager";
 
 const SAVE_DEBOUNCE_MS = SAVE_TO_LOCAL_STORAGE_TIMEOUT; // 300ms
 const THUMBNAIL_DEBOUNCE_MS = 30000;
+const OFFLINE_LOCAL_KEY = "excalidraw-offline-scene";
+
+function isNetworkError(error: any): boolean {
+  return (
+    error?.name === "TypeError" ||
+    error?.message?.includes("NetworkError") ||
+    error?.message?.includes("Failed to fetch") ||
+    error?.message?.includes("network") ||
+    error?.status === 0
+  );
+}
+
+/** Save elements + appState to localStorage as offline fallback */
+function saveToLocalFallback(
+  sceneId: string,
+  elements: readonly ExcalidrawElement[],
+  appState: AppState,
+) {
+  try {
+    const cleanElements = getNonDeletedElements(elements);
+    const cleanAppState = clearAppStateForLocalStorage(appState);
+    localStorage.setItem(
+      `${OFFLINE_LOCAL_KEY}-${sceneId}`,
+      JSON.stringify({
+        elements: cleanElements,
+        appState: cleanAppState,
+        savedAt: Date.now(),
+      }),
+    );
+  } catch {
+    // localStorage might be full
+  }
+}
+
+/** Load offline data for a scene, if any */
+export function loadOfflineData(
+  sceneId: string,
+): { elements: any[]; appState: any; savedAt: number } | null {
+  try {
+    const raw = localStorage.getItem(`${OFFLINE_LOCAL_KEY}-${sceneId}`);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+/** Clear offline data after successful sync */
+function clearOfflineData(sceneId: string) {
+  localStorage.removeItem(`${OFFLINE_LOCAL_KEY}-${sceneId}`);
+}
 
 export class CloudData {
   private static _save = debounce(
@@ -48,6 +102,9 @@ export class CloudData {
       const cleanElements = getNonDeletedElements(elements);
       const cleanAppState = clearAppStateForLocalStorage(appState);
 
+      // Always write to localStorage as fallback
+      saveToLocalFallback(sceneState.id, elements, appState);
+
       try {
         const result = await updateScene(sceneState.id, {
           elements: cleanElements as any[],
@@ -55,7 +112,8 @@ export class CloudData {
           sceneVersion: sceneState.sceneVersion,
         });
 
-        // Update sceneVersion after successful save
+        // Success — clear offline data and update state
+        clearOfflineData(sceneState.id);
         appJotaiStore.set(cloudSceneAtom, {
           ...sceneState,
           sceneVersion: result.sceneVersion,
@@ -66,15 +124,43 @@ export class CloudData {
         await CloudData.fileStorage.saveFiles({ elements, files });
         onFilesSaved();
       } catch (error: any) {
-        console.error("CloudData save failed:", error);
-        appJotaiStore.set(cloudSceneAtom, {
-          ...sceneState,
-          saveStatus: "error",
-        });
+        if (isNetworkError(error)) {
+          // Offline — data is safe in localStorage
+          appJotaiStore.set(cloudSceneAtom, {
+            ...sceneState,
+            saveStatus: "offline",
+          });
+          // Try again later
+          CloudData._scheduleRetry(elements, appState, files, onFilesSaved);
+        } else {
+          console.error("CloudData save failed:", error);
+          appJotaiStore.set(cloudSceneAtom, {
+            ...sceneState,
+            saveStatus: "error",
+          });
+        }
       }
     },
     SAVE_DEBOUNCE_MS,
   );
+
+  private static _retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  private static _scheduleRetry(
+    elements: readonly ExcalidrawElement[],
+    appState: AppState,
+    files: BinaryFiles,
+    onFilesSaved: () => void,
+  ) {
+    if (CloudData._retryTimeout) {
+      clearTimeout(CloudData._retryTimeout);
+    }
+    // Retry in 10 seconds
+    CloudData._retryTimeout = setTimeout(() => {
+      CloudData._retryTimeout = null;
+      CloudData._save(elements, appState, files, onFilesSaved);
+    }, 10000);
+  }
 
   static save = (
     elements: readonly ExcalidrawElement[],
@@ -83,7 +169,7 @@ export class CloudData {
     onFilesSaved: () => void,
   ) => {
     const sceneState = appJotaiStore.get(cloudSceneAtom);
-    if (sceneState) {
+    if (sceneState && sceneState.saveStatus !== "offline") {
       appJotaiStore.set(cloudSceneAtom, {
         ...sceneState,
         saveStatus: "saving",
@@ -184,7 +270,6 @@ export class CloudData {
       const erroredFiles = new Map<FileId, BinaryFileData>();
 
       if (!sceneId) {
-        // Can't save files without a scene ID
         for (const [id, fileData] of addedFiles) {
           erroredFiles.set(id, fileData);
         }

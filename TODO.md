@@ -25,7 +25,7 @@
 - [x] Dashboard: drag scenes into folders
 - [x] Dashboard: bulk select + bulk delete/move (Ctrl/Cmd+click to select)
 - [x] Dashboard: sort by folder name in scene list
-- [ ] Offline support / graceful degradation when server unreachable
+- [x] Offline support / graceful degradation when server unreachable
 
 ## high priority features
 
