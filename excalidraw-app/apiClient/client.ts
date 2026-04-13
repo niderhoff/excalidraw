@@ -18,12 +18,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
 
   if (!response.ok) {
-    // Session expired — redirect to Authelia login.
-    // /auth-redirect is an Nginx location with auth_request that
-    // returns 302 to Authelia when unauthenticated. The ?rd= param
-    // tells Authelia where to return after login.
+    // Session expired — redirect to Authelia login directly.
     if (response.status === 401) {
-      window.location.href = `/auth-redirect?rd=${encodeURIComponent(
+      const authPortal =
+        import.meta.env.VITE_APP_AUTH_URL ||
+        `https://auth.${window.location.hostname
+          .split(".")
+          .slice(-2)
+          .join(".")}`;
+      window.location.href = `${authPortal}/?rd=${encodeURIComponent(
         window.location.href,
       )}`;
       return new Promise<never>(() => {});

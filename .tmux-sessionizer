@@ -1,0 +1,3 @@
+tmux rename-window niid/selfhost
+tmux send-keys "claude --continue --dangerously-skip-permissions --max-turns 50" Enter
+tmux select-window -t "niid/selfhost"
