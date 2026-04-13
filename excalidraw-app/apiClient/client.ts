@@ -19,7 +19,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     // Session expired — redirect to Authelia login directly.
+    // Guard against redirect loops: only redirect once per 5 seconds.
     if (response.status === 401) {
+      const lastRedirect = Number(
+        sessionStorage.getItem("_auth_redirect_ts") || "0",
+      );
+      if (Date.now() - lastRedirect < 5000) {
+        // Already redirected recently — don't loop, just throw
+        throw new ApiError(401, "Session expired. Please refresh the page.");
+      }
+      sessionStorage.setItem("_auth_redirect_ts", String(Date.now()));
       const authPortal =
         import.meta.env.VITE_APP_AUTH_URL ||
         `https://auth.${window.location.hostname
