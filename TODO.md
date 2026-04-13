@@ -39,7 +39,7 @@
 
 ## technical debt
 
-- [ ] sqlite database backups to R2 (with litestream)
+- [x] sqlite database backups to R2 (with litestream)
 
 ## Out of Scope (Future Considerations)
 
