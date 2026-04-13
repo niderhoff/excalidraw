@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { exportToCanvas } from "@excalidraw/excalidraw";
+import { jsPDF } from "jspdf";
 
 import type {
   ExcalidrawFrameLikeElement,
@@ -168,6 +169,53 @@ export const PresentationMode = ({
     link.click();
   }, [currentIndex]);
 
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  const handleExportPdf = useCallback(async () => {
+    if (exportingPdf) {
+      return;
+    }
+    setExportingPdf(true);
+    try {
+      // Render all slides, determine PDF orientation from first slide
+      const firstSlide = slides[0];
+      const landscape = firstSlide.width > firstSlide.height;
+      const pdf = new jsPDF({
+        orientation: landscape ? "landscape" : "portrait",
+        unit: "px",
+        format: [firstSlide.width, firstSlide.height],
+      });
+
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i];
+        const canvas = await exportToCanvas({
+          elements: elements as any,
+          appState: { exportBackground: true } as any,
+          files,
+          exportPadding: 0,
+          exportingFrame: slide,
+          getDimensions: (w: number, h: number) => ({
+            width: w * 2,
+            height: h * 2,
+            scale: 2,
+          }),
+        });
+
+        if (i > 0) {
+          pdf.addPage([slide.width, slide.height], landscape ? "l" : "p");
+        }
+
+        const imgData = canvas.toDataURL("image/png");
+        pdf.addImage(imgData, "PNG", 0, 0, slide.width, slide.height);
+      }
+
+      pdf.save("presentation.pdf");
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    }
+    setExportingPdf(false);
+  }, [slides, elements, files, exportingPdf]);
+
   if (slideCount === 0) {
     onExit();
     return null;
@@ -250,7 +298,8 @@ export const PresentationMode = ({
         <button
           className="presentation-mode__tool-btn"
           onClick={handleDownload}
-          aria-label="Download slide"
+          aria-label="Download slide as PNG"
+          title="Download slide (PNG)"
         >
           <svg
             width="18"
@@ -261,6 +310,27 @@ export const PresentationMode = ({
             strokeWidth="2"
           >
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+        </button>
+        <button
+          className="presentation-mode__tool-btn"
+          onClick={handleExportPdf}
+          disabled={exportingPdf}
+          aria-label="Export all slides as PDF"
+          title="Export PDF"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+            <line x1="12" y1="18" x2="12" y2="12" />
+            <line x1="9" y1="15" x2="15" y2="15" />
           </svg>
         </button>
         <button

@@ -34,7 +34,7 @@
 
 ## low priority features
 
-- [ ] download presentation PDF and PPT (even with read-only link)
+- [x] download presentation as PDF (all slides rendered via jsPDF)
 - [ ] Real-time link-based collaboration (should we use impelemnt it client side only or server-side?)
 
 ## technical debt
