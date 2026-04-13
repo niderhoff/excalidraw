@@ -127,14 +127,10 @@ export const DashboardPage = () => {
   // Scene actions
   const handleRenameScene = useCallback(
     async (id: string, title: string) => {
-      const scene = scenes.find((s) => s.id === id);
-      if (!scene) {
-        return;
-      }
-      await updateScene(id, { title, sceneVersion: scene.sceneVersion });
+      await updateScene(id, { title });
       fetchScenes();
     },
-    [scenes, fetchScenes],
+    [fetchScenes],
   );
 
   const handleDuplicateScene = useCallback(
@@ -164,22 +160,13 @@ export const DashboardPage = () => {
   const handleBulkMove = useCallback(
     async (folderId: string | null) => {
       await Promise.all(
-        [...selectedIds].map((id) => {
-          const scene = scenes.find((s) => s.id === id);
-          if (!scene) {
-            return Promise.resolve();
-          }
-          return updateScene(id, {
-            folderId,
-            sceneVersion: scene.sceneVersion,
-          });
-        }),
+        [...selectedIds].map((id) => updateScene(id, { folderId })),
       );
       setSelectedIds(new Set());
       setMoveDialogSceneId(null);
       fetchScenes();
     },
-    [selectedIds, scenes, fetchScenes],
+    [selectedIds, fetchScenes],
   );
 
   const handleMoveConfirm = useCallback(async () => {
@@ -190,17 +177,10 @@ export const DashboardPage = () => {
       await handleBulkMove(moveFolderId);
       return;
     }
-    const scene = scenes.find((s) => s.id === moveDialogSceneId);
-    if (!scene) {
-      return;
-    }
-    await updateScene(moveDialogSceneId, {
-      folderId: moveFolderId,
-      sceneVersion: scene.sceneVersion,
-    });
+    await updateScene(moveDialogSceneId, { folderId: moveFolderId });
     setMoveDialogSceneId(null);
     fetchScenes();
-  }, [moveDialogSceneId, moveFolderId, scenes, fetchScenes, handleBulkMove]);
+  }, [moveDialogSceneId, moveFolderId, fetchScenes, handleBulkMove]);
 
   // Folder actions
   const handleCreateFolder = useCallback(
@@ -237,17 +217,10 @@ export const DashboardPage = () => {
   // Drag-and-drop: move scene to folder
   const handleDropScene = useCallback(
     async (sceneId: string, folderId: string | null) => {
-      const scene = scenes.find((s) => s.id === sceneId);
-      if (!scene) {
-        return;
-      }
-      await updateScene(sceneId, {
-        folderId,
-        sceneVersion: scene.sceneVersion,
-      });
+      await updateScene(sceneId, { folderId });
       fetchScenes();
     },
-    [scenes, fetchScenes],
+    [fetchScenes],
   );
 
   // Bulk selection
