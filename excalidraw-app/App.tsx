@@ -824,6 +824,18 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
     null,
   );
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
+
+  // Alt+D → Dashboard
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === "d") {
+        e.preventDefault();
+        window.location.href = "/dashboard";
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
 
   const onExportToBackend = async (
@@ -1108,6 +1120,22 @@ const ExcalidrawWrapper = ({ sceneId }: { sceneId?: string }) => {
 
         <CommandPalette
           customCommandPaletteItems={[
+            {
+              label: "Dashboard",
+              category: DEFAULT_CATEGORIES.app,
+              keywords: [
+                "home",
+                "scenes",
+                "drawings",
+                "files",
+                "folders",
+                "browse",
+              ],
+              predicate: true,
+              perform: () => {
+                window.location.href = "/dashboard";
+              },
+            },
             {
               label: t("labels.liveCollaboration"),
               category: DEFAULT_CATEGORIES.app,

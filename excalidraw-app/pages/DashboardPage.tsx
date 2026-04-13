@@ -54,6 +54,25 @@ export const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  // Keyboard shortcut: N for new drawing
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+      if (e.key === "n" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        navigate("/scene/new");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [navigate]);
+
   // Sync theme with editor's localStorage setting
   useLayoutEffect(() => {
     const mediaQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
