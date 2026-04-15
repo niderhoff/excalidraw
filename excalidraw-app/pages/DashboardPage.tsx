@@ -46,7 +46,17 @@ export const DashboardPage = () => {
   const [theme, setTheme] = useState<"light" | "dark">(getResolvedTheme);
   const [scenes, setScenes] = useState<SceneMeta[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [currentFolderId, _setCurrentFolderId] = useState<string | null>(
+    () => sessionStorage.getItem("dashboard-folder-id") || null,
+  );
+  const setCurrentFolderId = useCallback((id: string | null) => {
+    _setCurrentFolderId(id);
+    if (id) {
+      sessionStorage.setItem("dashboard-folder-id", id);
+    } else {
+      sessionStorage.removeItem("dashboard-folder-id");
+    }
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<
     "updatedAt" | "createdAt" | "title" | "folder"
@@ -211,7 +221,7 @@ export const DashboardPage = () => {
       fetchFolders();
       fetchScenes();
     },
-    [currentFolderId, fetchFolders, fetchScenes],
+    [currentFolderId, setCurrentFolderId, fetchFolders, fetchScenes],
   );
 
   // Drag-and-drop: move scene to folder
@@ -296,8 +306,10 @@ export const DashboardPage = () => {
         <div className="dashboard__sidebar">
           <FolderTree
             folders={folders}
+            scenes={scenes}
             currentFolderId={currentFolderId}
             onSelectFolder={setCurrentFolderId}
+            onSelectScene={(id) => navigate(`/scene/${id}`)}
             onCreateFolder={handleCreateFolder}
             onRenameFolder={handleRenameFolder}
             onDeleteFolder={handleDeleteFolder}

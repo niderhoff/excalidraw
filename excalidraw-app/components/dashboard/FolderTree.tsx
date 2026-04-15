@@ -3,19 +3,24 @@ import { useState, useRef, useEffect } from "react";
 import "./Dashboard.scss";
 
 import type { Folder } from "../../apiClient/folders";
+import type { SceneMeta } from "../../apiClient/scenes";
 
 export const FolderTree = ({
   folders,
+  scenes,
   currentFolderId,
   onSelectFolder,
+  onSelectScene,
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
   onDropScene,
 }: {
   folders: Folder[];
+  scenes: SceneMeta[];
   currentFolderId: string | null;
   onSelectFolder: (id: string | null) => void;
+  onSelectScene: (id: string) => void;
   onCreateFolder: (name: string, parentId?: string | null) => void;
   onRenameFolder: (id: string, name: string) => void;
   onDeleteFolder: (id: string) => void;
@@ -199,6 +204,35 @@ export const FolderTree = ({
           )}
         </div>
       ))}
+
+      {scenes.length > 0 && (
+        <>
+          <div className="dashboard-folder-tree__label">Recent</div>
+          {scenes.slice(0, 10).map((scene) => (
+            <button
+              key={scene.id}
+              className="dashboard-folder-tree__item dashboard-folder-tree__scene"
+              onClick={() => onSelectScene(scene.id)}
+              title={scene.title}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              <span className="dashboard-folder-tree__scene-title">
+                {scene.title}
+              </span>
+            </button>
+          ))}
+        </>
+      )}
 
       {isCreating ? (
         <input

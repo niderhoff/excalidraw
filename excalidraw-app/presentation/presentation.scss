@@ -203,6 +203,28 @@
       color: #c0c0c0;
     }
   }
+
+  &--active {
+    background: rgba(255, 60, 60, 0.2) !important;
+    color: #ff3c3c !important;
+  }
+}
+
+// Laser pointer dot
+.presentation-mode__laser {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff3c3c;
+  box-shadow: 0 0 8px 4px rgba(255, 60, 60, 0.4);
+  pointer-events: none;
+  z-index: 10001;
+  transform: translate(-50%, -50%);
+}
+
+.presentation-mode__canvas-wrapper--laser {
+  cursor: none;
 }
 
 .presentation-mode__counter {

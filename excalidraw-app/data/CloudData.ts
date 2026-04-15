@@ -186,6 +186,8 @@ export class CloudData {
     return document.hidden;
   };
 
+  private static _hasSavedFirstThumbnail = false;
+
   // Generate and save a thumbnail (debounced separately, less frequent)
   private static _saveThumbnail = debounce(
     async (elements: readonly ExcalidrawElement[], files: BinaryFiles) => {
@@ -226,7 +228,17 @@ export class CloudData {
     files: BinaryFiles,
   ) => {
     if (!CloudData.isSavePaused()) {
-      CloudData._saveThumbnail(elements, files);
+      // Generate first thumbnail immediately (3s after first change),
+      // then debounce at 30s for subsequent updates
+      if (!CloudData._hasSavedFirstThumbnail) {
+        CloudData._hasSavedFirstThumbnail = true;
+        setTimeout(() => {
+          CloudData._saveThumbnail(elements, files);
+          CloudData._saveThumbnail.flush();
+        }, 3000);
+      } else {
+        CloudData._saveThumbnail(elements, files);
+      }
     }
   };
 

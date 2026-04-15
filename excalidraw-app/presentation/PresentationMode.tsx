@@ -26,8 +26,10 @@ export const PresentationMode = ({
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [transitioning, setTransitioning] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [laserOn, setLaserOn] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const laserRef = useRef<HTMLDivElement>(null);
 
   const slideCount = slides.length;
   const currentSlide = slides[currentIndex];
@@ -216,6 +218,21 @@ export const PresentationMode = ({
     setExportingPdf(false);
   }, [slides, elements, files, exportingPdf]);
 
+  // Laser pointer follows mouse
+  useEffect(() => {
+    if (!laserOn) {
+      return;
+    }
+    const handler = (e: MouseEvent) => {
+      if (laserRef.current) {
+        laserRef.current.style.left = `${e.clientX}px`;
+        laserRef.current.style.top = `${e.clientY}px`;
+      }
+    };
+    window.addEventListener("mousemove", handler);
+    return () => window.removeEventListener("mousemove", handler);
+  }, [laserOn]);
+
   if (slideCount === 0) {
     onExit();
     return null;
@@ -229,7 +246,12 @@ export const PresentationMode = ({
       ref={containerRef}
       onClick={handleClick}
     >
-      <div className="presentation-mode__canvas-wrapper">
+      {laserOn && <div ref={laserRef} className="presentation-mode__laser" />}
+      <div
+        className={`presentation-mode__canvas-wrapper ${
+          laserOn ? "presentation-mode__canvas-wrapper--laser" : ""
+        }`}
+      >
         <canvas
           ref={canvasRef}
           className={`presentation-mode__canvas ${
@@ -279,6 +301,26 @@ export const PresentationMode = ({
 
         <div className="presentation-mode__separator" />
 
+        <button
+          className={`presentation-mode__tool-btn ${
+            laserOn ? "presentation-mode__tool-btn--active" : ""
+          }`}
+          onClick={() => setLaserOn((l) => !l)}
+          aria-label="Toggle laser pointer"
+          title="Laser pointer"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="12" cy="12" r="2" />
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+          </svg>
+        </button>
         <button
           className="presentation-mode__tool-btn"
           onClick={() => setDarkMode((d) => !d)}

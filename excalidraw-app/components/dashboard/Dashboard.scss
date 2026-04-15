@@ -437,6 +437,18 @@
   color: var(--text-primary-color, inherit);
 }
 
+.dashboard-folder-tree__scene {
+  font-size: 0.75rem !important;
+  opacity: 0.8;
+  padding-left: 1.25rem !important;
+}
+
+.dashboard-folder-tree__scene-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .dashboard-folder-tree__add-btn {
   display: flex;
   align-items: center;
