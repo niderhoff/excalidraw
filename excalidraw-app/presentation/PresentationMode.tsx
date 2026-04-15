@@ -58,8 +58,6 @@ export const PresentationMode = ({
       elements: elements as any,
       appState: {
         exportBackground: true,
-        exportWithDarkMode: darkMode,
-        viewBackgroundColor: darkMode ? "#1e1e1e" : "#ffffff",
       } as any,
       files,
       exportPadding: 0,
@@ -268,11 +266,6 @@ export const PresentationMode = ({
       onClick={handleClick}
     >
       <div
-        ref={laserRef}
-        className="presentation-mode__laser"
-        style={{ display: laserOn ? "block" : "none" }}
-      />
-      <div
         className={`presentation-mode__canvas-wrapper ${
           laserOn ? "presentation-mode__canvas-wrapper--laser" : ""
         }`}
@@ -417,6 +410,11 @@ export const PresentationMode = ({
           </svg>
         </button>
       </div>
+      <div
+        ref={laserRef}
+        className="presentation-mode__laser"
+        style={{ display: laserOn ? "block" : "none" }}
+      />
     </div>
   );
 };
