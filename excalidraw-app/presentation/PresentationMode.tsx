@@ -52,7 +52,8 @@ export const PresentationMode = ({
     }
     // scrollToContent with the frame element zooms/pans to fit it
     api.scrollToContent(currentSlide, {
-      fitToContent: true,
+      fitToViewport: true,
+      viewportZoomFactor: 1,
       animate: false,
       duration: 0,
     });
