@@ -80,44 +80,59 @@ export const PresentationMode = ({
     setCurrentIndex((i) => Math.max(i - 1, 0));
   }, []);
 
-  // Keyboard navigation
+  // Keyboard navigation — only intercept our keys, let everything else
+  // (like K for laser) pass through to the Excalidraw instance
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if modifier keys are held (except for our shortcuts)
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+      }
       switch (e.key) {
         case "ArrowRight":
         case "PageDown":
           e.preventDefault();
+          e.stopPropagation();
           goNext();
           break;
         case "ArrowLeft":
         case "PageUp":
           e.preventDefault();
+          e.stopPropagation();
           goPrev();
           break;
         case "Escape":
           e.preventDefault();
+          e.stopPropagation();
           onExit();
           break;
         case "Home":
           e.preventDefault();
+          e.stopPropagation();
           setCurrentIndex(0);
           break;
         case "End":
           e.preventDefault();
+          e.stopPropagation();
           setCurrentIndex(slideCount - 1);
           break;
         default:
           if (/^\d$/.test(e.key)) {
+            e.preventDefault();
+            e.stopPropagation();
             const num = parseInt(e.key, 10);
             if (num >= 1 && num <= slideCount) {
               setCurrentIndex(num - 1);
             }
           }
+          // All other keys (K, etc.) pass through to Excalidraw
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    // Use capture phase so we intercept before Excalidraw, but only
+    // stop propagation for our specific keys
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [goNext, goPrev, onExit, slideCount]);
 
   const handleFullscreen = useCallback(() => {
