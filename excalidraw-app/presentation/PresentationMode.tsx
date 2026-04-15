@@ -204,6 +204,12 @@ export const PresentationMode = ({
               viewModeEnabled: true,
               theme: darkMode ? "dark" : "light",
               zenModeEnabled: true,
+              frameRendering: {
+                enabled: true,
+                name: false,
+                outline: false,
+                clip: true,
+              },
             },
             files,
           }}
