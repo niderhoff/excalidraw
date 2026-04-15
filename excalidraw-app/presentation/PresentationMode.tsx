@@ -40,24 +40,38 @@ export const PresentationMode = ({
     return false;
   });
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
+  const [ready, setReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const slideCount = slides.length;
   const currentSlide = slides[currentIndex];
 
-  // Scroll to current frame when slide changes or API becomes available
+  const scrollToFrame = useCallback(
+    (frameId: string, animate: boolean) => {
+      if (!api) {
+        return;
+      }
+      const sceneElements = api.getSceneElements();
+      const frame = sceneElements.find((el) => el.id === frameId);
+      if (frame) {
+        api.scrollToContent(frame, {
+          fitToViewport: true,
+          viewportZoomFactor: 0.95,
+          animate,
+          duration: animate ? 300 : 0,
+        });
+      }
+    },
+    [api],
+  );
+
+  // Scroll to frame when slide changes (after initial load)
   useEffect(() => {
-    if (!api || !currentSlide) {
+    if (!ready || !currentSlide) {
       return;
     }
-    // scrollToContent with the frame element zooms/pans to fit it
-    api.scrollToContent(currentSlide, {
-      fitToViewport: true,
-      viewportZoomFactor: 1,
-      animate: false,
-      duration: 0,
-    });
-  }, [api, currentSlide]);
+    scrollToFrame(currentSlide.id, true);
+  }, [ready, currentSlide, scrollToFrame]);
 
   const goNext = useCallback(() => {
     setCurrentIndex((i) => Math.min(i + 1, slideCount - 1));
@@ -218,6 +232,20 @@ export const PresentationMode = ({
           zenModeEnabled={true}
           theme={darkMode ? "dark" : "light"}
           onExcalidrawAPI={(a) => setApi(a)}
+          onInitialize={(a) => {
+            // Scene is loaded — scroll to the initial slide
+            const frame = a
+              .getSceneElements()
+              .find((el) => el.id === slides[startIndex]?.id);
+            if (frame) {
+              a.scrollToContent(frame, {
+                fitToViewport: true,
+                viewportZoomFactor: 0.95,
+                animate: false,
+              });
+            }
+            setReady(true);
+          }}
           UIOptions={{
             canvasActions: {
               export: false,
