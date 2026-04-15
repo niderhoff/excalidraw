@@ -507,6 +507,45 @@ export const HelpDialog = ({ onClose }: { onClose?: () => void }) => {
               shortcuts={[getShortcutKey("CtrlOrCmd+Shift+>")]}
             />
           </ShortcutIsland>
+          <ShortcutIsland
+            className="HelpDialog__island--selfhosted"
+            caption="Self-hosted"
+          >
+            <Shortcut
+              label="Dashboard"
+              shortcuts={[getShortcutKey("CtrlOrCmd+Shift+D")]}
+            />
+            <Shortcut
+              label="Start presentation"
+              shortcuts={["F5"]}
+            />
+            <Shortcut
+              label="Next slide"
+              shortcuts={["→", "PgDn"]}
+              isOr={true}
+            />
+            <Shortcut
+              label="Previous slide"
+              shortcuts={["←", "PgUp"]}
+              isOr={true}
+            />
+            <Shortcut
+              label="Exit presentation"
+              shortcuts={[getShortcutKey("Escape")]}
+            />
+            <Shortcut
+              label="Laser pointer"
+              shortcuts={[KEYS.K]}
+            />
+            <Shortcut
+              label="Toggle dark mode"
+              shortcuts={[getShortcutKey("Alt+Shift+D")]}
+            />
+            <Shortcut
+              label="New drawing (dashboard)"
+              shortcuts={["N"]}
+            />
+          </ShortcutIsland>
         </Section>
       </Dialog>
     </>
