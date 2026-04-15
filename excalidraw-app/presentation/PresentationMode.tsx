@@ -40,6 +40,7 @@ export const PresentationMode = ({
     return false;
   });
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
+  const [laserOn, setLaserOn] = useState(false);
   const [ready, setReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -320,14 +321,13 @@ export const PresentationMode = ({
 
         <button
           className={`presentation-mode__tool-btn ${
-            api?.getAppState().activeTool.type === "laser"
-              ? "presentation-mode__tool-btn--active"
-              : ""
+            laserOn ? "presentation-mode__tool-btn--active" : ""
           }`}
           onClick={() => {
             if (api) {
-              const isLaser = api.getAppState().activeTool.type === "laser";
-              api.setActiveTool(isLaser ? { type: "hand" } : { type: "laser" });
+              const next = !laserOn;
+              api.setActiveTool(next ? { type: "laser" } : { type: "hand" });
+              setLaserOn(next);
             }
           }}
           aria-label="Toggle laser pointer (K)"
