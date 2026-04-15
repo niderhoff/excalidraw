@@ -94,7 +94,7 @@ export const DashboardPage = () => {
     try {
       const serverSort = sortField === "folder" ? "updatedAt" : sortField;
       const data = await listScenes({
-        folderId: currentFolderId,
+        folderId: currentFolderId ?? undefined,
         sort: serverSort,
         order: serverSort === "title" ? "asc" : "desc",
         q: searchQuery || undefined,
