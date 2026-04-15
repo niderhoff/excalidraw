@@ -195,6 +195,16 @@
       color: #c0c0c0;
     }
   }
+
+  &--active {
+    background: rgba(255, 60, 60, 0.2);
+    color: #ff3c3c;
+
+    &:hover {
+      background: rgba(255, 60, 60, 0.3);
+      color: #ff3c3c;
+    }
+  }
 }
 
 .presentation-mode__counter {
