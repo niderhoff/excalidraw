@@ -106,16 +106,33 @@ export class CloudData {
       saveToLocalFallback(sceneState.id, elements, appState);
 
       try {
-        const result = await updateScene(sceneState.id, {
-          elements: cleanElements as any[],
-          appState: cleanAppState,
-          sceneVersion: sceneState.sceneVersion,
-        });
+        let result;
+        try {
+          result = await updateScene(sceneState.id, {
+            elements: cleanElements as any[],
+            appState: cleanAppState,
+            sceneVersion: sceneState.sceneVersion,
+          });
+        } catch (err: any) {
+          // Version conflict — retry with the latest version from the atom
+          if (err.status === 409 || err.data?.error === "Version conflict") {
+            const latest = appJotaiStore.get(cloudSceneAtom);
+            const retryVersion =
+              err.data?.serverVersion ?? latest?.sceneVersion;
+            result = await updateScene(sceneState.id, {
+              elements: cleanElements as any[],
+              appState: cleanAppState,
+              sceneVersion: retryVersion,
+            });
+          } else {
+            throw err;
+          }
+        }
 
         // Success — clear offline data and update state
         clearOfflineData(sceneState.id);
         appJotaiStore.set(cloudSceneAtom, {
-          ...sceneState,
+          ...appJotaiStore.get(cloudSceneAtom)!,
           sceneVersion: result.sceneVersion,
           saveStatus: "saved",
         });
@@ -126,10 +143,13 @@ export class CloudData {
       } catch (error: any) {
         if (isNetworkError(error)) {
           // Offline — data is safe in localStorage
-          appJotaiStore.set(cloudSceneAtom, {
-            ...sceneState,
-            saveStatus: "offline",
-          });
+          const latestState = appJotaiStore.get(cloudSceneAtom);
+          if (latestState) {
+            appJotaiStore.set(cloudSceneAtom, {
+              ...latestState,
+              saveStatus: "offline",
+            });
+          }
           // Try again later
           CloudData._scheduleRetry(elements, appState, files, onFilesSaved);
         } else {
