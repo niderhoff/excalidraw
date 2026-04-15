@@ -84,7 +84,14 @@ export const PresentationMode = ({
   // (like K for laser) pass through to the Excalidraw instance
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if modifier keys are held (except for our shortcuts)
+      // Shift+Alt+D — toggle dark mode in presentation
+      if (e.shiftKey && e.altKey && (e.key === "d" || e.key === "D")) {
+        e.preventDefault();
+        e.stopPropagation();
+        setDarkMode((d) => !d);
+        return;
+      }
+      // Don't intercept if modifier keys are held
       if (e.ctrlKey || e.metaKey || e.altKey) {
         return;
       }
