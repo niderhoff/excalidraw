@@ -42,6 +42,17 @@ export const PresentationMode = ({
   const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
   const [laserOn, setLaserOn] = useState(false);
   const [ready, setReady] = useState(false);
+
+  const toggleLaser = useCallback(() => {
+    if (!api) {
+      return;
+    }
+    const isCurrentlyLaser =
+      api.getAppState().activeTool.type === "laser";
+    const next = !isCurrentlyLaser;
+    api.setActiveTool(next ? { type: "laser" } : { type: "hand" });
+    setLaserOn(next);
+  }, [api]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const slideCount = slides.length;
@@ -123,11 +134,7 @@ export const PresentationMode = ({
         case "K":
           e.preventDefault();
           e.stopPropagation();
-          if (api) {
-            const next = !laserOn;
-            api.setActiveTool(next ? { type: "laser" } : { type: "hand" });
-            setLaserOn(next);
-          }
+          toggleLaser();
           break;
         case "End":
           e.preventDefault();
@@ -151,7 +158,7 @@ export const PresentationMode = ({
     // stop propagation for our specific keys
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [goNext, goPrev, onExit, slideCount]);
+  }, [goNext, goPrev, onExit, slideCount, toggleLaser]);
 
   const handleFullscreen = useCallback(() => {
     if (document.fullscreenElement) {
@@ -333,13 +340,7 @@ export const PresentationMode = ({
           className={`presentation-mode__tool-btn ${
             laserOn ? "presentation-mode__tool-btn--active" : ""
           }`}
-          onClick={() => {
-            if (api) {
-              const next = !laserOn;
-              api.setActiveTool(next ? { type: "laser" } : { type: "hand" });
-              setLaserOn(next);
-            }
-          }}
+          onClick={toggleLaser}
           aria-label="Toggle laser pointer (K)"
           title="Laser pointer (K)"
         >
