@@ -137,25 +137,17 @@
   }
 }
 
-.presentation-mode__canvas-wrapper {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+// Wraps the full Excalidraw instance in view mode
+.presentation-mode__excalidraw-wrapper {
+  position: absolute;
+  inset: 0;
   // Leave room for toolbar at bottom
   padding-bottom: 3.5rem;
-}
 
-.presentation-mode__canvas {
-  max-width: 100%;
-  max-height: 100%;
-  transition: opacity 0.2s ease;
-}
-
-.presentation-mode__canvas--hidden {
-  opacity: 0;
+  // Hide all Excalidraw UI chrome in presentation
+  .excalidraw .layer-ui__wrapper {
+    display: none;
+  }
 }
 
 // Dark pill toolbar — always visible at bottom center
@@ -203,28 +195,6 @@
       color: #c0c0c0;
     }
   }
-
-  &--active {
-    background: rgba(255, 60, 60, 0.2) !important;
-    color: #ff3c3c !important;
-  }
-}
-
-// Laser pointer dot
-.presentation-mode__laser {
-  position: fixed;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #ff3c3c;
-  box-shadow: 0 0 8px 4px rgba(255, 60, 60, 0.4);
-  pointer-events: none;
-  z-index: 10001;
-  transform: translate(-50%, -50%);
-}
-
-.presentation-mode__canvas-wrapper--laser {
-  cursor: none;
 }
 
 .presentation-mode__counter {

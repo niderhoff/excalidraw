@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { exportToCanvas } from "@excalidraw/excalidraw";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Excalidraw, exportToCanvas } from "@excalidraw/excalidraw";
 import { jsPDF } from "jspdf";
 
 import type {
   ExcalidrawFrameLikeElement,
   NonDeletedExcalidrawElement,
 } from "@excalidraw/element/types";
-import type { BinaryFiles } from "@excalidraw/excalidraw/types";
+import type {
+  BinaryFiles,
+  ExcalidrawImperativeAPI,
+} from "@excalidraw/excalidraw/types";
 
 import "./presentation.scss";
 
@@ -24,7 +27,6 @@ export const PresentationMode = ({
   onExit: () => void;
 }) => {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
-  const [transitioning, setTransitioning] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const stored = localStorage.getItem("excalidraw-theme");
     if (stored === "dark") {
@@ -37,74 +39,24 @@ export const PresentationMode = ({
     }
     return false;
   });
-  const [laserOn, setLaserOn] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const laserRef = useRef<HTMLDivElement>(null);
 
   const slideCount = slides.length;
   const currentSlide = slides[currentIndex];
 
-  // Render current slide to canvas
+  // Scroll to current frame when slide changes or API becomes available
   useEffect(() => {
-    if (!currentSlide || !canvasRef.current) {
+    if (!api || !currentSlide) {
       return;
     }
-
-    let cancelled = false;
-    setTransitioning(true);
-
-    exportToCanvas({
-      elements: elements as any,
-      appState: {
-        exportBackground: true,
-      } as any,
-      files,
-      exportPadding: 0,
-      exportingFrame: currentSlide,
-      getDimensions: (width: number, height: number) => {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const dpr = window.devicePixelRatio || 1;
-        const fitScale = Math.min(vw / width, vh / height);
-        const scale = fitScale * dpr;
-        return {
-          width: Math.ceil(width * scale),
-          height: Math.ceil(height * scale),
-          scale,
-        };
-      },
-    })
-      .then((renderedCanvas) => {
-        if (cancelled || !canvasRef.current) {
-          return;
-        }
-        canvasRef.current.width = renderedCanvas.width;
-        canvasRef.current.height = renderedCanvas.height;
-        const ctx = canvasRef.current.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(renderedCanvas, 0, 0);
-        }
-        const dpr = window.devicePixelRatio || 1;
-        canvasRef.current.style.width = `${renderedCanvas.width / dpr}px`;
-        canvasRef.current.style.height = `${renderedCanvas.height / dpr}px`;
-        requestAnimationFrame(() => {
-          if (!cancelled) {
-            setTransitioning(false);
-          }
-        });
-      })
-      .catch((err) => {
-        console.error("Failed to render slide:", err);
-        if (!cancelled) {
-          setTransitioning(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentSlide, elements, files, darkMode]);
+    // scrollToContent with the frame element zooms/pans to fit it
+    api.scrollToContent(currentSlide, {
+      fitToContent: true,
+      animate: false,
+      duration: 0,
+    });
+  }, [api, currentSlide]);
 
   const goNext = useCallback(() => {
     setCurrentIndex((i) => Math.min(i + 1, slideCount - 1));
@@ -119,8 +71,6 @@ export const PresentationMode = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case "ArrowRight":
-        case " ":
-        case "Enter":
         case "PageDown":
           e.preventDefault();
           goNext();
@@ -133,11 +83,6 @@ export const PresentationMode = ({
         case "Escape":
           e.preventDefault();
           onExit();
-          break;
-        case "k":
-        case "K":
-          e.preventDefault();
-          setLaserOn((l) => !l);
           break;
         case "Home":
           e.preventDefault();
@@ -161,20 +106,6 @@ export const PresentationMode = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [goNext, goPrev, onExit, slideCount]);
 
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      if ((e.target as HTMLElement).closest(".presentation-mode__toolbar")) {
-        return;
-      }
-      // Don't advance slides when laser pointer is active
-      if (laserOn) {
-        return;
-      }
-      goNext();
-    },
-    [goNext, laserOn],
-  );
-
   const handleFullscreen = useCallback(() => {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
@@ -183,17 +114,31 @@ export const PresentationMode = ({
     }
   }, []);
 
+  const [exportingPdf, setExportingPdf] = useState(false);
+
   const handleDownload = useCallback(() => {
-    if (!canvasRef.current) {
+    if (!api) {
       return;
     }
-    const link = document.createElement("a");
-    link.download = `slide-${currentIndex + 1}.png`;
-    link.href = canvasRef.current.toDataURL("image/png");
-    link.click();
-  }, [currentIndex]);
-
-  const [exportingPdf, setExportingPdf] = useState(false);
+    // Export current frame as PNG via exportToCanvas
+    exportToCanvas({
+      elements: elements as any,
+      appState: { exportBackground: true } as any,
+      files,
+      exportPadding: 0,
+      exportingFrame: currentSlide,
+      getDimensions: (w: number, h: number) => ({
+        width: w * 2,
+        height: h * 2,
+        scale: 2,
+      }),
+    }).then((canvas) => {
+      const link = document.createElement("a");
+      link.download = `slide-${currentIndex + 1}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    });
+  }, [api, elements, files, currentSlide, currentIndex]);
 
   const handleExportPdf = useCallback(async () => {
     if (exportingPdf) {
@@ -201,7 +146,6 @@ export const PresentationMode = ({
     }
     setExportingPdf(true);
     try {
-      // Render all slides, determine PDF orientation from first slide
       const firstSlide = slides[0];
       const landscape = firstSlide.width > firstSlide.height;
       const pdf = new jsPDF({
@@ -240,18 +184,6 @@ export const PresentationMode = ({
     setExportingPdf(false);
   }, [slides, elements, files, exportingPdf]);
 
-  // Laser pointer follows mouse (always listen, only show when laserOn)
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (laserRef.current) {
-        laserRef.current.style.left = `${e.clientX}px`;
-        laserRef.current.style.top = `${e.clientY}px`;
-      }
-    };
-    window.addEventListener("mousemove", handler);
-    return () => window.removeEventListener("mousemove", handler);
-  }, [laserOn]);
-
   if (slideCount === 0) {
     onExit();
     return null;
@@ -263,18 +195,28 @@ export const PresentationMode = ({
         darkMode ? "presentation-mode--dark" : ""
       }`}
       ref={containerRef}
-      onClick={handleClick}
     >
-      <div
-        className={`presentation-mode__canvas-wrapper ${
-          laserOn ? "presentation-mode__canvas-wrapper--laser" : ""
-        }`}
-      >
-        <canvas
-          ref={canvasRef}
-          className={`presentation-mode__canvas ${
-            transitioning ? "presentation-mode__canvas--hidden" : ""
-          }`}
+      <div className="presentation-mode__excalidraw-wrapper">
+        <Excalidraw
+          initialData={{
+            elements,
+            appState: {
+              viewModeEnabled: true,
+              theme: darkMode ? "dark" : "light",
+              zenModeEnabled: true,
+            },
+            files,
+          }}
+          viewModeEnabled={true}
+          zenModeEnabled={true}
+          theme={darkMode ? "dark" : "light"}
+          onExcalidrawAPI={(a) => setApi(a)}
+          UIOptions={{
+            canvasActions: {
+              export: false,
+              toggleTheme: false,
+            },
+          }}
         />
       </div>
 
@@ -319,26 +261,6 @@ export const PresentationMode = ({
 
         <div className="presentation-mode__separator" />
 
-        <button
-          className={`presentation-mode__tool-btn ${
-            laserOn ? "presentation-mode__tool-btn--active" : ""
-          }`}
-          onClick={() => setLaserOn((l) => !l)}
-          aria-label="Toggle laser pointer"
-          title="Laser pointer"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <circle cx="12" cy="12" r="2" />
-            <path d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-          </svg>
-        </button>
         <button
           className="presentation-mode__tool-btn"
           onClick={() => setDarkMode((d) => !d)}
@@ -410,11 +332,6 @@ export const PresentationMode = ({
           </svg>
         </button>
       </div>
-      <div
-        ref={laserRef}
-        className="presentation-mode__laser"
-        style={{ display: laserOn ? "block" : "none" }}
-      />
     </div>
   );
 };
