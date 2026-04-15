@@ -25,7 +25,18 @@ export const PresentationMode = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
   const [transitioning, setTransitioning] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const stored = localStorage.getItem("excalidraw-theme");
+    if (stored === "dark") {
+      return true;
+    }
+    if (stored === "system") {
+      return (
+        window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false
+      );
+    }
+    return false;
+  });
   const [laserOn, setLaserOn] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -122,6 +133,7 @@ export const PresentationMode = ({
           onExit();
           break;
         case "k":
+        case "K":
           e.preventDefault();
           setLaserOn((l) => !l);
           break;
@@ -152,9 +164,13 @@ export const PresentationMode = ({
       if ((e.target as HTMLElement).closest(".presentation-mode__toolbar")) {
         return;
       }
+      // Don't advance slides when laser pointer is active
+      if (laserOn) {
+        return;
+      }
       goNext();
     },
-    [goNext],
+    [goNext, laserOn],
   );
 
   const handleFullscreen = useCallback(() => {
