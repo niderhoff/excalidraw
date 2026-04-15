@@ -56,7 +56,11 @@ export const PresentationMode = ({
 
     exportToCanvas({
       elements: elements as any,
-      appState: { exportBackground: true } as any,
+      appState: {
+        exportBackground: true,
+        exportWithDarkMode: darkMode,
+        viewBackgroundColor: darkMode ? "#1e1e1e" : "#ffffff",
+      } as any,
       files,
       exportPadding: 0,
       exportingFrame: currentSlide,
@@ -102,7 +106,7 @@ export const PresentationMode = ({
     return () => {
       cancelled = true;
     };
-  }, [currentSlide, elements, files]);
+  }, [currentSlide, elements, files, darkMode]);
 
   const goNext = useCallback(() => {
     setCurrentIndex((i) => Math.min(i + 1, slideCount - 1));
@@ -238,11 +242,8 @@ export const PresentationMode = ({
     setExportingPdf(false);
   }, [slides, elements, files, exportingPdf]);
 
-  // Laser pointer follows mouse
+  // Laser pointer follows mouse (always listen, only show when laserOn)
   useEffect(() => {
-    if (!laserOn) {
-      return;
-    }
     const handler = (e: MouseEvent) => {
       if (laserRef.current) {
         laserRef.current.style.left = `${e.clientX}px`;
@@ -266,7 +267,11 @@ export const PresentationMode = ({
       ref={containerRef}
       onClick={handleClick}
     >
-      {laserOn && <div ref={laserRef} className="presentation-mode__laser" />}
+      <div
+        ref={laserRef}
+        className="presentation-mode__laser"
+        style={{ display: laserOn ? "block" : "none" }}
+      />
       <div
         className={`presentation-mode__canvas-wrapper ${
           laserOn ? "presentation-mode__canvas-wrapper--laser" : ""
