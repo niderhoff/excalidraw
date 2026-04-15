@@ -121,6 +121,10 @@ export const PresentationMode = ({
           e.preventDefault();
           onExit();
           break;
+        case "k":
+          e.preventDefault();
+          setLaserOn((l) => !l);
+          break;
         case "Home":
           e.preventDefault();
           setCurrentIndex(0);
