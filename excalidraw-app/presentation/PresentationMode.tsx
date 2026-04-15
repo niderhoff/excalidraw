@@ -119,6 +119,16 @@ export const PresentationMode = ({
           e.stopPropagation();
           setCurrentIndex(0);
           break;
+        case "k":
+        case "K":
+          e.preventDefault();
+          e.stopPropagation();
+          if (api) {
+            const next = !laserOn;
+            api.setActiveTool(next ? { type: "laser" } : { type: "hand" });
+            setLaserOn(next);
+          }
+          break;
         case "End":
           e.preventDefault();
           e.stopPropagation();

@@ -91,6 +91,18 @@ export const PresentationSidebar = () => {
     [slides.length],
   );
 
+  // F5 to start presentation from slide 1
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "F5") {
+        e.preventDefault();
+        handlePresent(0);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [handlePresent]);
+
   if (!excalidrawAPI) {
     return null;
   }
