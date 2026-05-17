@@ -44,9 +44,17 @@ await client.execute(`
     thumbnail TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL,
-    scene_version INTEGER NOT NULL DEFAULT 0
+    scene_version INTEGER NOT NULL DEFAULT 0,
+    pinned_at INTEGER
   )
 `);
+
+// Add pinned_at column to existing DBs that predate it
+try {
+  await client.execute("ALTER TABLE scenes ADD COLUMN pinned_at INTEGER");
+} catch {
+  // Column already exists
+}
 
 await client.execute(`
   CREATE TABLE IF NOT EXISTS files (
@@ -82,6 +90,9 @@ await client.execute(
 );
 await client.execute(
   "CREATE INDEX IF NOT EXISTS idx_scenes_updated_at ON scenes(updated_at)",
+);
+await client.execute(
+  "CREATE INDEX IF NOT EXISTS idx_scenes_pinned_at ON scenes(pinned_at)",
 );
 await client.execute(
   "CREATE INDEX IF NOT EXISTS idx_files_scene_id ON files(scene_id)",

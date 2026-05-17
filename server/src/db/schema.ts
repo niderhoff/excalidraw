@@ -23,6 +23,7 @@ export const scenes = sqliteTable("scenes", {
   createdAt: integer("created_at", { mode: "number" }).notNull(),
   updatedAt: integer("updated_at", { mode: "number" }).notNull(),
   sceneVersion: integer("scene_version").notNull().default(0),
+  pinnedAt: integer("pinned_at", { mode: "number" }),
 });
 
 export const settings = sqliteTable("settings", {

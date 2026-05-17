@@ -8,6 +8,7 @@ export interface SceneMeta {
   createdAt: number;
   updatedAt: number;
   sceneVersion: number;
+  pinnedAt: number | null;
 }
 
 export interface SceneFull extends SceneMeta {
@@ -69,6 +70,7 @@ export async function updateScene(
     appState?: Record<string, any> | null;
     thumbnail?: string | null;
     sceneVersion?: number;
+    pinned?: boolean;
   },
 ): Promise<{ sceneVersion: number; updatedAt: number }> {
   return put<{ sceneVersion: number; updatedAt: number }>(

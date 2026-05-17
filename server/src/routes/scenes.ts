@@ -50,13 +50,14 @@ export function createScenesRouter(storage: StorageAdapter) {
       createdAt: scenes.createdAt,
       updatedAt: scenes.updatedAt,
       sceneVersion: scenes.sceneVersion,
+      pinnedAt: scenes.pinnedAt,
     };
 
     const results = await db
       .select(selectFields)
       .from(scenes)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(orderByColumn);
+      .orderBy(desc(scenes.pinnedAt), orderByColumn);
 
     return c.json({ scenes: results });
   });
@@ -158,6 +159,9 @@ export function createScenesRouter(storage: StorageAdapter) {
     }
     if (body.thumbnail !== undefined) {
       updates.thumbnail = body.thumbnail;
+    }
+    if (body.pinned !== undefined) {
+      updates.pinnedAt = body.pinned ? Date.now() : null;
     }
 
     await db.update(scenes).set(updates).where(eq(scenes.id, id));

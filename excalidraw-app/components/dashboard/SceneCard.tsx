@@ -37,6 +37,7 @@ export const SceneCard = ({
   onDuplicate,
   onDelete,
   onMove,
+  onTogglePin,
 }: {
   scene: SceneMeta;
   folderName?: string;
@@ -46,6 +47,7 @@ export const SceneCard = ({
   onDuplicate: (id: string) => void;
   onDelete: (id: string) => void;
   onMove: (id: string) => void;
+  onTogglePin: (id: string, pinned: boolean) => void;
 }) => {
   const [, navigate] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -111,15 +113,30 @@ export const SceneCard = ({
     [scene.id],
   );
 
+  const isPinned = scene.pinnedAt != null;
+
   return (
     <div
       className={`dashboard-scene-card ${
         selected ? "dashboard-scene-card--selected" : ""
-      }`}
+      } ${isPinned ? "dashboard-scene-card--pinned" : ""}`}
       onClick={handleClick}
       draggable
       onDragStart={handleDragStart}
     >
+      {isPinned && (
+        <div className="dashboard-scene-card__pin-badge" title="Pinned">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            stroke="none"
+          >
+            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z" />
+          </svg>
+        </div>
+      )}
       <div className="dashboard-scene-card__thumbnail">
         {scene.thumbnail ? (
           <img src={scene.thumbnail} alt={scene.title} />
@@ -179,6 +196,15 @@ export const SceneCard = ({
         </button>
         {menuOpen && (
           <div className="dashboard-scene-card__menu">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpen(false);
+                onTogglePin(scene.id, !isPinned);
+              }}
+            >
+              {isPinned ? "Unpin" : "Pin to top"}
+            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();

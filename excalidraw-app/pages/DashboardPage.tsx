@@ -167,6 +167,14 @@ export const DashboardPage = () => {
     setMoveFolderId(null);
   }, []);
 
+  const handleTogglePin = useCallback(
+    async (id: string, pinned: boolean) => {
+      await updateScene(id, { pinned });
+      fetchScenes();
+    },
+    [fetchScenes],
+  );
+
   const handleBulkMove = useCallback(
     async (folderId: string | null) => {
       await Promise.all(
@@ -255,13 +263,21 @@ export const DashboardPage = () => {
     fetchScenes();
   }, [selectedIds, fetchScenes]);
 
-  // Client-side sort by folder name
+  // Client-side sort by folder name (pinned scenes always stay on top)
   const sortedScenes = useMemo(() => {
     if (sortField !== "folder") {
       return scenes;
     }
     const folderMap = new Map(folders.map((f) => [f.id, f.name]));
     return [...scenes].sort((a, b) => {
+      const aPinned = a.pinnedAt != null;
+      const bPinned = b.pinnedAt != null;
+      if (aPinned !== bPinned) {
+        return aPinned ? -1 : 1;
+      }
+      if (aPinned && bPinned) {
+        return (b.pinnedAt ?? 0) - (a.pinnedAt ?? 0);
+      }
       const aName = a.folderId ? folderMap.get(a.folderId) || "" : "";
       const bName = b.folderId ? folderMap.get(b.folderId) || "" : "";
       return aName.localeCompare(bName);
@@ -403,6 +419,7 @@ export const DashboardPage = () => {
                     onDuplicate={handleDuplicateScene}
                     onDelete={handleDeleteScene}
                     onMove={handleMoveScene}
+                    onTogglePin={handleTogglePin}
                   />
                 ))}
               </div>
